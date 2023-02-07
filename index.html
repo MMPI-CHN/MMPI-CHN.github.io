@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script type="text/javascript" src="js/data.js"></script>
+  <script type="text/javascript" src="js/script.js"></script>
+</head>
+<body>
+  
+  <h1>
+    MMPI-2 (en & zh) scale 2008@Kevin Timmerman
+  </h1>
+  <form name="config" action="#">
+    <p>
+      Assigned sex 指派性别:<br>
+      <input type="radio" name="gender" value="M" onclick="set_gender(0);" checked="">Male
+      <input type="radio" name="gender" value="F" onclick="set_gender(1);">Female
+    </p>
+    <p>
+      Test 567 / 370:<br>
+      <input type="radio" name="testform" value="L" onclick="use_long_form(true);" checked="">Long
+      <input type="radio" name="testform" value="S" onclick="use_long_form(false);">Short
+    </p>
+  </form>
+
+  <form name="questions" action="#">
+    <p>
+      <script type="text/javascript">doc_write_all_questions();</script>
+
+      <input type="button" value="Score" onclick="score_rb(document.forms.questions);">
+      <br><br>
+    <p></p>
+  </form>
+
+</body>
+</html>
