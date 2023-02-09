@@ -1,36 +1,164 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script type="text/javascript" src="js/data.js"></script>
-  <script type="text/javascript" src="js/script.js"></script>
-</head>
-<body>
-  
-  <h1>
-    MMPI-2 (en & zh) scale 2008@Kevin Timmerman
-  </h1>
-  <form name="config" action="#">
-    <p>
-      Assigned sex 指派性别:<br>
-      <input type="radio" name="gender" value="M" onclick="set_gender(0);" checked="">Male
-      <input type="radio" name="gender" value="F" onclick="set_gender(1);">Female
-    </p>
-    <p>
-      Test 567 / 370:<br>
-      <input type="radio" name="testform" value="L" onclick="use_long_form(true);" checked="">Long
-      <input type="radio" name="testform" value="S" onclick="use_long_form(false);">Short
-    </p>
-  </form>
+<!-- saved from url=(0023)https://dounai.lol/user -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>免费MMPI中文测试--最专业的人格测试！</title>
+		
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#edf1ed">
+		<link rel="stylesheet" href="./copy_files/main.css">
+		<!--[if lte IE 9]><link rel="stylesheet" href="/assets/css/ie9.css" /><![endif]-->
+		<noscript><link rel="stylesheet" href="/assets/css/noscript.css?v=3.0" /></noscript>
+<style>
+		#bg:after {
+			-moz-transform: scale(1.125);
+			-webkit-transform: scale(1.125);
+			-ms-transform: scale(1.125);
+			transform: scale(1.125);
+			-moz-transition: -moz-transform 0.325s ease-in-out, -moz-filter 0.325s ease-in-out;
+			-webkit-transition: -webkit-transform 0.325s ease-in-out, -webkit-filter 0.325s ease-in-out;
+			-ms-transition: -ms-transform 0.325s ease-in-out, -ms-filter 0.325s ease-in-out;
+			transition: transform 0.325s ease-in-out, filter 0.325s ease-in-out;
 
-  <form name="questions" action="#">
-    <p>
-      <script type="text/javascript">doc_write_all_questions();</script>
+			<!-- background-image: url(/bg/14.png); -->
+			background-position: center;
+			background-size: cover;
+			background-repeat: no-repeat;
+			z-index: 1;
+		}
+</style>
+	<style>hcfy-result.__hcfy__result__loaded__.__hcfy__result__both__{border: 1px dotted}</style></head>
+	<body class="">
 
-      <input type="button" value="Score" onclick="score_rb(document.forms.questions);">
-      <br><br>
-    <p></p>
-  </form>
+		<!-- Wrapper -->
+			<div id="wrapper">
 
-</body>
-</html>
+				<!-- Header -->
+					<header id="header">
+						<div class="logo">
+							<span class="icon fa-diamond"></span>
+						</div>
+						<div class="content">
+							<div class="inner">
+								<h2>MMPI中文测试</h2>
+								<p style="text-align:left;margin-top:5px;margin-bottom:5px;width:750px"><b>明尼苏达多项人格问卷</b>（MMPI: Minnesota Multiphasic Personality Inventory）是目前世界上使用范围很广和使用频率很高的人格与临床心理学测验之一。其初始版本由美国明尼苏达大学的心理学家于1943年编制。1990年代，香港中文大学和中国科学院心理研究所对此进行了修订。时至今日，MMPI已经发展到包括800多种量表的一个量表体系，被翻译成超过115种语言，在60多个国家使用。MMPI主要用于精神疾病的辅助临床诊断，以及心理咨询及心理治疗。</p>
+
+							</div>
+						</div>
+						<nav>
+							<ul>
+								
+								<li><a href="https://dounai.lol/user/panel"><b>MMPI测试概述</b></a></li>		
+								<!-- <li><a href="#download"><b>软件下载</b></a></li> -->
+								<li><a href="https://doubledou2018.gitbook.io/" target="_blank"><b>MMPI-1测试</b></a></li>
+	
+															
+								<li><a href="https://dounai.lol/user/logout"><b>关于MMPI-2</b></a></li>
+
+								<!--<li><a href="#elements">Elements</a></li>-->
+							</ul>
+						</nav>
+					</header>
+
+				<!-- Main -->
+					<div id="main" style="display: none;">
+
+						<!-- Intro -->
+						
+						 <article id="download" style="display: none;">
+                                                     <h2 class="major">软件下载</h2>
+							<ul>
+							  <li><a href="https://dounai.lol/ssr-download/ssr-win.7z" class="icon fa-windows"><span class="label"></span> Windows SSR</a></li>
+							  <li><a href="https://dounai.lol/ssr-download/SSTap.7z" class="icon fa-windows"><span class="label"></span> Windows SSTAP</a></li>
+							  <li><a href="https://dounai.lol/ssr-download/ssr-mac.dmg" class="icon fa-apple"><span class="label">Mac</span> Mac</a></li>
+							  <li><a href="https://dounai.lol/ssr-download/ssr-android.apk" class="icon fa-android"><span class="label">Android</span> Android</a></li>
+							  <li><a href="https://dounai.lol/user#ios" class="icon fa-apple"><span class="label">iOS</span> iOS</a></li>
+	                         </ul>													
+                                                        <div class="close">Close</div></article>	
+
+													 <article id="fuli" style="display: none;">
+                                                     <h2 class="major">小福利</h2>
+					  <p>为答谢大家对我们的支持， 我们利用服务器的闲置空间，做了一个小网盘给大家应急用，如果你有临时转储文件，但是又没带u盘这个就不错，比渣渣百度云要快很多，文件为大家保留<code>3天</code>，3天后自动清理。</p>
+					  <p>注意网盘是公开的，所以不要上传什么个人隐私或工作文档。仅限内部使用，请君不要随意传播哦，不然分分钟炸掉。</p>	
+							  <p>网盘地址: <code><a href="http://share.doubledou.win/" target="_blank">share.doubledou.win</a></code><br>用户名密码均为：<code>doubledouuser</code></p>
+															
+                                                        <div class="close">Close</div></article>	
+
+
+						<!-- Intro -->
+						<!--
+						 <article id="love">
+                                                     <h2 class="major">下载壁纸</h2>
+							
+							  <a href="/bg/bg.jpg" target="_blank"><img src=/bg/14.png style="width:100%"></img></a>												
+                                                        </article>	
+                        -->
+
+
+						 <article id="coupon" style="display: none;">
+                                                                <h2 class="major">优惠</h2>
+                                                     	
+<p>囍闻AB离婚，情不自禁发一个9折优惠码"abjXtXxA9j",1.30号17:30前有效</p>
+						<div class="close">Close</div></article>
+                                                        <article id="ios" style="display: none;">
+                                                                <h2 class="major">ios软件下载</h2>
+                                                                <p>
+								1.推荐您在苹果手机或者平板上使用Quantumult或者Shadowrocket，注意两款软件均只能在非中国区商店购买。
+								</p><p>
+								2. 如果您遇到购买困难，您也可以添加我们的公众号doubledouweb，获取共享下载账号，已经购买了上述两款软件。
+													</p>
+                                                        <div class="close">Close</div></article>	
+
+						<article id="code" style="display: none;">  
+		
+								<h2 class="major">邀请码</h2>
+								<h4>说明</h4>
+								<blockquote>邀请码是您加入本站的钥匙，没有邀请码暂时是无法注册的，如果邀请码用完，请<a href="https://dounai.lol/index.html#contact">点击这里</a>联系站长索要。</blockquote>
+		
+									<div class="table-wrapper">
+										<table>
+											<thead>
+												<tr>
+													<th>id</th>
+													<th>邀请码(点击即可注册)</th>
+												</tr>
+											</thead>
+											<tbody>
+											
+
+											</tbody>
+										
+										</table>
+									</div>
+
+
+
+
+
+
+
+
+						<div class="close">Close</div></article> 
+
+
+
+</div>
+			<footer id="footer">
+                   <p class="copyright">©喵喵 <a href="./meowmeow.html">黑猫！</a></p>
+                      </footer>	
+
+			</div>
+
+		<!-- BG -->
+			<div id="bg"></div>
+
+		<!-- Scripts -->
+			<script src="./copy_files/jquery.min.js"></script>
+			<script src="./copy_files/skel.min.js"></script>
+			<script src="./copy_files/util.js"></script>
+			<script src="./copy_files/main.js"></script>
+
+	
+	
+
+
+</body><div style="all: initial;"><div id="__hcfy__" style="all: initial;"></div></div><auto-scroll></auto-scroll></html>
