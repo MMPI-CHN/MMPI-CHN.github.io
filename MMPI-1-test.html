@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>留白.....</title>
+  <script type="text/javascript" src="origin_js/my_data.js"></script>
+  <script type="text/javascript" src="origin_js/my_script.js"></script>
+  <!-- <link rel="stylesheet" href="./copy_files/main.css"> -->
+
+  <style>
+	body {background-color: #1b1f22;
+        /*background-image: linear-gradient(#1b1f22, #708090);*/
+    }
+  </style>
+  <style>
+    label {
+        margin-right: 15px;
+        line-height: 32px;
+      }
+      
+    input[type="radio"] {
+        appearance: none;
+      
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+      
+        border: 2px solid #999;
+        transition: 0.2s all linear;
+        margin-right: 5px;
+      
+        position: relative;
+        top: 4px;
+      }
+      
+      input:checked {
+        border: 6px solid #B0C4DE;
+      }
+      
+      /* from web... */
+      .my_button {
+        border-radius: 12px;
+        padding: 8px 12px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 1.2rem;
+        margin: 4px 2px;
+        -webkit-transition-duration: 0.4s; /* Safari */
+        transition-duration: 0.4s;
+        cursor: pointer;
+        font-family:Arial,Kaiti;
+    }
+    
+    .my_button {
+        background-color: #696969; 
+        color: white; 
+        border: 2px solid #B0C4DE;
+    }
+    
+    .my_button:hover {
+        background-color: #B0C4DE;
+        color: white;
+    }
+  </style>
+</head>
+<body><div>
+  
+    <div style="width:100%;text-align:center;color:#F0F8FF;font-size:2rem;font-family:Times New Roman,Kaiti">
+        <h1>
+            <b>MMPI-2中英对照测试</b>
+        </h1>
+    </div>
+
+  <div style="width:100%;text-align:center;color:#F0F8FF;font-size:1.5rem;font-family:Arial,Kaiti">
+  <!-- <div id="my_damn_form"> -->
+
+  <form name="config" action="#">
+    <p>
+      Assigned sex <br>您的性别:<br>
+      <input type="radio" name="gender" value="M" onclick="set_gender(0);" checked="">Male
+      <input type="radio" name="gender" value="F" onclick="set_gender(1);">Female
+    </p>
+    <p>
+      Test 567 / 370:<br>测试版本：完整版（567） 或 简略版（370）<br>
+      <input type="radio" name="testform" value="L" onclick="use_long_form(true);" checked="">Long
+      <input type="radio" name="testform" value="S" onclick="use_long_form(false);">Short
+    </p>
+  </form>
+
+  <form name="questions" action="#">
+    <p>
+      <script type="text/javascript">my_doc_write_all_questions();</script>
+
+      <button class="my_button" type="submit" name="check" value="meow~~"><span>检查空题</span></button>
+      <!-- 花招：当form中只有一个button时，这个button将会被视为submit，进而触发required，使得无法空题。
+            问题：submit是不是也可以直接挂一个onclick？反正在没有后端的情况下，submit也不会“报错” -->
+      <br>
+      <!-- <br> -->
+      <input class="my_button" type="button" value="提交测试" onclick="score_rb(document.forms.questions);">
+      <!-- <button name="提交测试" value="提交测试" onclick="score_rb(document.forms.questions);">提交测试</button> -->
+      <br><br>
+    <p></p>
+  </form>
+
+  </div>
+
+</div><!--这种在body上直接加div的方法能解决渐变的问题吗？-->></body>
+</html>

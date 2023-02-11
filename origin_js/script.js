@@ -317,3 +317,19 @@ function doc_write_all_questions() {
   }
   if (i > 370) { document.write("<\/div>"); }
 }
+
+
+function my_doc_write_all_questions() {
+  for (var i = 1; i < questions.length; ++i) {
+    my_doc_write_question("Q" + i, i + ". " + questions[i], questions_zh[i]);
+    if (i === 370) { document.write("<div id=\"longformdiv\">"); }
+  }
+  if (i > 370) { document.write("<\/div>"); }
+}
+
+function my_doc_write_question(name, text, text_zh) {
+  document.write(text + "<br>", text_zh + "<br>");
+  document.write("<input type=\"radio\" name=" + name + " value=\"T\">True");
+  document.write("<input type=\"radio\" name=" + name + " value=\"F\">False");
+  document.write("<br><br>");
+}
