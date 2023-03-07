@@ -60,6 +60,9 @@ function append_text(txt) {
   gender = 0;		// 0==male, 1==female
   ans = []; 		// Answers to questions: [T,F,?]
   
+  /* meowmeow 20230307 */
+  ans_debug = ["FTTTTFFFFFTTFTTTTTFFFFTFTTFTTFTTTTTTFFFTTTTFTFFFTFFTTFTTTFTTTTFTTTTFFFFFFFTTTFFFFFFTFFTTTFTFFTTFFFTTTFFFFFTFFTFFFTTTFFFFFFTFTFFTFFTFFTTTFTTFFTFTTFTFFFFTTTFFTTFFFFTFTTTFTTTFTTFFTTTTFFTFFFTFTTTFTFTTTTFFFFFFTTFFTTFTFFFTTFTTFFTFTTTFTTFFFTFTFTTFTFTFTTFFFFFFTFFTTFTTFTFFTTFFFTFTFFTFTFTTTTTTFTFFTFTFFTFFFFFFFTFFFFFFFTTTFTFFFFFTFTFTTTTFFFFTTTTTFFTFFFTTTFFTTTFTFFTFFTTFFTFFFTTTTFTFTTTFTFFTFFTFTFFTTTFTFTFTTTFFTTTFTFFFTTTFTFTFTFTTFTTFFTTTFFTFTFFTTTTTFTTFFFTTFFFTFFTTFTFTFTTTFFTTTFTTFTFFFTTFTFTTFTTFTTFFTTFTFFFTTTFTFTFFTFTFTTTFFFFFTTFFTTTFTTTFTFFTTFFFTFTTFTTTFFFFFFTTFFFFTFFFTTF"]
+  
   // Score the test
   function score() {
     // Change mouse pointer to wait indicator
@@ -330,4 +333,173 @@ function append_text(txt) {
     // document.write("<input type=\"radio\" name=" + name + " value=\"F\">否");
     document.write("<input type=\"radio\" id=Not_" + name + " name=\"" + name + "\"value=\"T\" required=\"required\" ><label for=Not_" + name +">否</label>");
     document.write("<br><br><br>");
+  }
+
+
+
+
+  function my_test() {
+    // Change mouse pointer to wait indicator
+    // This does not seem to work because JavaScript blocks the UI message pump :(
+    document.body.style.cursor = "wait";
+  
+    // Variable declarations
+    let i, j, tscale, q, n, s, rp;
+    let k, rawscore, kscore, tscore, percent;
+    let t_cnt, f_cnt, cs_cnt, pe;
+  
+    // Make the scale and critical item tables
+    let scale_table = make_table("Scale", "Scale Description", "Raw Score", "K Score", "T Score", "% Answered");
+    let ci_table = make_table("Scale", "Scale Description", "Question", "Answer", "Question Text");
+  
+    // Count the number of True, False, and Can't Say answers
+    n = longform ? questions.length : 371;
+    t_cnt = 0;
+    f_cnt = 0;
+    cs_cnt = 0;
+    for (q = 1; q < n; ++q) {
+      switch (ans_debug[q]) {
+        case "T":
+          ++t_cnt;
+          break;
+        case "F":
+          ++f_cnt;
+          break;
+        default:
+          ++cs_cnt;
+          break;
+      }
+    }
+    --q;
+  
+    // Add T/F/? stats to scale table
+    append_tr(scale_table, "True", " ", t_cnt, " ", " ", (t_cnt * 100 / q).toPrecision(3));
+    append_tr(scale_table, "False", " ", f_cnt, " ", " ", (f_cnt * 100 / q).toPrecision(3));
+    append_tr(scale_table, "?", " ", cs_cnt, " ", " ", (cs_cnt * 100 / q).toPrecision(3));
+  
+    // Score the TRIN/VRIN scales
+    // Iterate the *RIN scales
+    for (i = 0; i < rin.length; ++i) {
+      // Start with default score
+      rawscore = rin[i][0][2];
+      // Iterate all the answer pairs
+      for (j = 0; j < rin[i][1].length; ++j) {
+        // Get reference to answer pair
+        rp = rin[i][1][j];
+        // If answers match, update the raw score
+        if (ans_debug[rp[0]] === rp[1] && ans_debug[rp[2]] === rp[3]) {
+          rawscore += rp[4];
+        }
+      }
+      // Append results to scale table
+      append_tr(scale_table, rin[i][0][0], rin[i][0][1], rawscore, " ", rin[i][2 + gender][rawscore], " ");
+    }
+  
+    // Score the scales and critical items
+    k = 0;
+    pe = 0;
+    // Iterate all the scales
+    for (i = 0; i < scales.length; ++i) {
+      n = 0;
+      rawscore = 0;
+      // Get the T score table, critcal items will not have this (undefined)
+      tscale = scales[i][3 + gender];
+      // Iterate the True question list
+      for (j = 0; j < scales[i][1].length; ++j) {
+        // Get the question number
+        q = scales[i][1][j];
+        // Act upon the answer to that question
+        switch (ans_debug[q]) {
+          // True
+          case "T":
+            // Increment the answer count
+            ++n;
+            // Increment raw score only if True
+            ++rawscore;
+            // If this is a critcal item, add it to the critical items table
+            if (tscale === undefined) {
+              append_tr(ci_table, scales[i][0][1], scales[i][0][2], q, "True", questions[q]);
+            }
+            break;
+          case "F":
+            // Increment the answer count
+            ++n;
+            break;
+        }
+      }
+      // Iterate the False question list (same procedure as True above)
+      for (j = 0; j < scales[i][2].length; ++j) {
+        q = scales[i][2][j];
+        switch (ans_debug[q]) {
+          case "F":
+            ++n;
+            ++rawscore;
+            if (tscale === undefined) {
+              append_tr(ci_table, scales[i][0][1], scales[i][0][2], q, "False", questions[q]);
+            }
+            break;
+          case "T":
+            ++n;
+            break;
+        }
+      }
+      // Add scale results to scale table
+      // T score table must be defined, otherwise this is a critical item
+      if (tscale !== undefined) {
+        // Capture K for future use
+        if (scales[i][0][0] === "K") { k = rawscore; }
+        // If there is a K correction, use it
+        if (tscale[0]) {
+          // Adjust with K
+          kscore = k * tscale[0] + rawscore;
+          // Round off and make integer
+          kscore = Math.floor(kscore + 0.5);
+          // T score lookup of corrected score
+          tscore = tscale[kscore + 1];
+          // No K correction
+        } else {
+          // K score is undefinded
+          kscore = undefined;
+          // T score lookup of raw score
+          tscore = tscale[rawscore + 1];
+        }
+        // Calculate percent answered
+        percent = n * 100 / (scales[i][1].length + j);
+        // Append results to score table
+        append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore === undefined ? " " : kscore, tscore, percent.toPrecision(3));
+  
+        // Update profile elevation for the 8 scales
+        switch (scales[i][0][1]) {
+          case "Hs":
+          case "D":
+          case "Hy":
+          case "Pd":
+          case "Pa":
+          case "Pt":
+          case "Sc":
+          case "Ma":
+            pe += tscore;
+            break;
+        }
+      }
+    }
+    // Convert profile elevation sum to average (divide by number of scales)
+    pe /= 8;
+    // Show profile elevation in page
+    append_text("Profile Elevation: " + pe.toPrecision(3));
+  
+    // Show an answer summary to allow for copy & paste of answers
+    append_text("Answer Summary");
+    s = "";
+    for (q = 1; q < questions.length; ++q) {
+      s += ans_debug[q];
+      if (s.length >= 75) {
+        append_text(s);
+        s = "";
+      }
+    }
+    if (s.length) { append_text(s); }
+  
+    // Restore mouse pointer
+    document.body.style.cursor = "auto";
   }
