@@ -10,7 +10,7 @@ function append_text(txt) {
     // temp.style.color = "white";
     // temp.style.margin = "auto";
     newP.appendChild(myTextNode);
-    docbody.appendChild(myTextNode);
+    docbody.appendChild(newP);
     
     docbody.appendChild(document.createElement("br"));
   }
