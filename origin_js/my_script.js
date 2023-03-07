@@ -31,7 +31,8 @@ function append_text(txt) {
     table.setAttribute("border", "5");
     
     /*meow meow 20230307*/
-    table.setAttribute("align", "center");
+    // table.setAttribute("align", "center");
+    table.style.margin = "auto";
     table.setAttribute("bgcolor", "#B0C4DE");
 
     thead = document.createElement("thead");
