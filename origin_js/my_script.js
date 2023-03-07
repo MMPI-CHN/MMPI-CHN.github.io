@@ -4,11 +4,11 @@ function append_text(txt) {
     // docbody.appendChild(document.createTextNode(txt));
     /*meow meow 20230307*/
     let newP = document.createElement("p");
-    newP.setAttribute("align", "center");
-    newP.setAttribute("color", "white");
+    // newP.setAttribute("align", "center");
+    newP.style.margin = "auto";
+    // newP.setAttribute("color", "white");
+    newP.style.color = "white";
     let myTextNode = document.createTextNode(txt);
-    // temp.style.color = "white";
-    // temp.style.margin = "auto";
     newP.appendChild(myTextNode);
     docbody.appendChild(newP);
     
