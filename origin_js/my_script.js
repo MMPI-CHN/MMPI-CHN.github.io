@@ -3,12 +3,14 @@ function append_text(txt) {
     let docbody = document.getElementsByTagName("body")[0];
     // docbody.appendChild(document.createTextNode(txt));
     /*meow meow 20230307*/
-    let temp = document.createTextNode(txt);
+    let newP = document.createElement("p");
+    newP.setAttribute("align", "center");
+    newP.setAttribute("color", "white");
+    let myTextNode = document.createTextNode(txt);
     // temp.style.color = "white";
     // temp.style.margin = "auto";
-    temp.setAttribute("align", "center");
-    temp.setAttribute("color", "white");
-    docbody.appendChild(temp);
+    newP.appendChild(myTextNode);
+    docbody.appendChild(myTextNode);
     
     docbody.appendChild(document.createElement("br"));
   }
