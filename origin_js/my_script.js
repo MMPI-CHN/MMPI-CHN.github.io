@@ -29,6 +29,11 @@ function append_text(txt) {
     docbody = document.getElementsByTagName("body")[0];
     table = document.createElement("table");
     table.setAttribute("border", "5");
+    
+    /*meow meow 20230307*/
+    table.setAttribute("border", "5");
+    table.setAttribute("bgcolor", "#B0C4DE");
+
     thead = document.createElement("thead");
     table.appendChild(thead);
     tbody = document.createElement("tbody");
