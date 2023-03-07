@@ -7,7 +7,7 @@ function append_text(txt) {
     // newP.setAttribute("align", "center");
     newP.style.margin = "auto";
     // newP.setAttribute("color", "white");
-    newP.style.color = "white";
+    newP.style.color = "#B0C4DE";
     let myTextNode = document.createTextNode(txt);
     newP.appendChild(myTextNode);
     docbody.appendChild(newP);
