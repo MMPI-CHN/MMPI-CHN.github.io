@@ -21,30 +21,40 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
+      width: 60%;
+      height: 60%;
+      background-color: rgba(203, 222, 211, 0.5);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 9999;
+
+      
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
     
     .modal-content {
-      background-color: #fff;
+      background-color: rgb(204, 210, 199);
       padding: 20px;
       border-radius: 5px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      font-family:Times New Roman,Hei,Kaiti;
       text-align: center;
     }
     
-    .modal-content h2 {
+    
+    .modal-content h1 {
       margin-top: 0;
+      text-align: center;
     }
     
     .modal-content p {
+      text-align: left;
       margin-bottom: 0;
     }
+
     
     .modal-close {
       position: absolute;
@@ -131,18 +141,18 @@
       <input type="radio" name="gender" value="M" onclick="set_gender(0);" checked="">Male
       <input type="radio" name="gender" value="F" onclick="set_gender(1);">Female
     </p>
-    <p>
+    <!-- <p>
       Test 567 / 370:<br>测试版本：完整版（567） 或 简略版（370）<br>
       <input type="radio" name="testform" value="L" onclick="use_long_form(true);" checked="">Long
       <input type="radio" name="testform" value="S" onclick="use_long_form(false);">Short
-    </p>
+    </p> -->
   </form>
 
-  <form name="questions" action="https://formspree.io/f/mgebzeqq" method="POST">
+  <form id="select_all" name="questions" action="https://formspree.io/f/mgebzeqq" method="POST">
     <p>
       <script type="text/javascript">my_doc_write_all_questions();</script>
 
-      <button class="my_button" type="submit" name="check" value="meow~~"><span>检查空题</span></button>
+      <button class="my_button" type="submit" name="check" value="meow~~"><span>发送结果</span></button>
       <!-- 花招：当form中只有一个button时，这个button将会被视为submit，进而触发required，使得无法空题。
             问题：submit是不是也可以直接挂一个onclick？反正在没有后端的情况下，submit也不会“报错” -->
       <br>
@@ -154,6 +164,8 @@
       <br>
       <!-- For Drawing... -->
       <input class="my_button" type="button" value="绘制人格剖析图" onclick="creat_trait_profile();">
+      <input class="my_button" type="button" value="精神逐渐异常" onclick="selectAll();">
+
 
       <!-- <button name="提交测试" value="提交测试" onclick="score_rb(document.forms.questions);">提交测试</button> -->
       <br><br>

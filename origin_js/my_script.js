@@ -893,9 +893,15 @@ var resultArray = [
   ["TRT（负面治疗指标）", "", "", ""],
 ];
 
+// 这个地方没写好……但是可以正确运行。注意与tscoreArray的下标对应关系
+var damn = [3, 0, 4, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16];
+
+
 // 打表
 // function start_to_print_result(tscoreArray){
 function start_to_print_result(resultArray, tscoreArray){
+
+
   let table = document.createElement("table");
   table.style.borderCollapse = "collapse";
   table.style.width = "80%";
@@ -922,27 +928,29 @@ function start_to_print_result(resultArray, tscoreArray){
 
   // 创建数据行和单元格
   // for (let i = 0; i < resultArray.length; i++) {
+    // 14 === 3 + 9 + 2(Mf)
   for (let i = 0; i < 13; i++) {
     // if(i === 12 || i === 7){
     if(i === 7){
       // 懒得打Mf的表了...
       continue;
     }
+
     let row = document.createElement("tr");
     table.appendChild(row);
 
     let cell1 = document.createElement("td");
-    cell1.textContent = resultArray[i][0] + " : " + tscoreArray[i];
+    cell1.textContent = resultArray[i][0] + " : " + tscoreArray[damn[i]];
     cell1.style.padding = "8px";
     cell1.style.borderRight = "1px solid black";
     row.appendChild(cell1);
 
     let cell2 = document.createElement("td");
 
-    if(tscoreArray[i] >= resultArray[i][1]){
+    if(tscoreArray[damn[i]] >= resultArray[i][1]){
       cell2.textContent = resultArray[i][3];
     }
-    else if(tscoreArray[i] >= resultArray[i][2]){
+    else if(tscoreArray[damn[i]] >= resultArray[i][2]){
       cell2.textContent = resultArray[i][4];
     }
     else{
@@ -966,10 +974,13 @@ function showModal() {
   modalContent.innerHTML = `
     <div class="modal-content">
       <span class="modal-close" onclick="hideModal()"></span>
-      <h2>重要提示</h2>
-      <p>1、本网站部署于github的服务器上，由于平台限制，</p>
-      <p>2、</p>
-      <p>3、</p>
+      <h1>重要提示</h1>
+      <p>0、请勿空题！虽然该量表在设计时允许空题，但是这会产生蝴蝶效应，使得量表对于没有阅读障碍的被试的可信度大大降低。另外，若能理解英文题干（并转化至中文语境），最好不要看中文。MMPI-2的567题版本通常需要40分钟以上完成。</p>
+      <p>1、我们不会收集任何与您有关的信息；但做完量表后，会有一个<b>共享结果</b>的按钮，如果您愿意将您的作答结果发送给我们进行统计，可以点击该按钮。这只会发送结果，并不记录任何与您有关的信息。为了避免测试白做，请一定要<b>先点击提交测试</b>按钮并查看您的结果！（建议截图）</p>
+      <p>2、请认真对待该测验；MMPI是少有的具有完整理论与多年实践的专业（人格）量表，可以帮助您更好地认识自己。需要注意的是，由于该量表常用于临床，因此它主要着眼于您“<b>也许</b>存在的问题”以及“<b>也许</b>拥有的人格特质”，而非像16pf之类的量表尝试将您划分为“某种人格”。</p>
+      <p>3、该量表的结果（真的真的）仅供参考；这是因为，虽然本网站根据您的选择计算得到的一致性T分是准确的，但是由于诸多限制，给出的解释是十分贫瘠且有限的。现实中，对该量表做出解释高度依赖于被试的态度、职业，以及一些特殊情景（如近期事件）等；若您希望获得更详细的解答，可以保存我们给出的量表的剖析图，并在日后咨询专业人士。</p>
+      <p>4、点击<b>提交测试</b>后，您将得到：两张人格剖析图、您作答的原始数据以及一些关键选项（均供专业人士使用；建议您保存以待后用），以及一份简略的解释；正如<b>2</b>所言，请勿过分较真。</p>
+      <p>5、本测验完全<b>免费</b>，不存在花钱买报告的情况。本项目由我独自开发，如果觉得做得还行，看完剖析图和报告后可以捐点钱给我买游戏 :D</p>
       <input class="my_button" type="button" value="我已认真阅读并知晓，可以开始测验" onclick="hideModal();">
     </div>
   `;
@@ -988,3 +999,31 @@ function hideModal() {
   var modal = document.querySelector(".modal");
   document.body.removeChild(modal);
 }
+
+
+
+
+function selectAll() {
+  // 获取表单元素
+  const form = document.getElementById("select_all");
+
+  // 选中所有表单元素中的值
+  let inputs = form.querySelectorAll("input[type=\"radio\"]");
+  // let value = "T";
+
+  for (let i = 0; i < inputs.length; i++) {
+    inputs[i].checked = true;
+  }
+}
+
+// GPT牛逼
+// var form = document.getElementById("myForm");
+// var inputs = form.querySelectorAll('input[type="radio"]');
+// var value = "male";
+
+// for (var i = 0; i < inputs.length; i++) {
+//   if(inputs[i].value === value){
+//     inputs[i].checked = true;
+//     break;
+//   }
+// }
