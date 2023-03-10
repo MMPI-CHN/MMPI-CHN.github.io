@@ -132,7 +132,14 @@
 <body><div>
 
   <!-- 尝试弹出提升框 -->
-  <script>window.onload = showModal();</script>
+  <script>
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // 在移动端上不使用该函数
+    } else {
+      // 在其他设备上使用该函数
+      window.onload = showModal();
+    }
+  </script>
   
     <div style="width:100%;text-align:center;color:#F0F8FF;font-size:2rem;font-family:Times New Roman,Hei,Kaiti">
         <h1>
