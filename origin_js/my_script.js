@@ -984,6 +984,11 @@ function showModal() {
       <input class="my_button" type="button" value="我已认真阅读并知晓，可以开始测验" onclick="hideModal();">
     </div>
   `;
+
+//  滑动？？？ 
+  modalContent.addEventListener("touchmove", function(e) {
+    e.stopPropagation();
+  }, false);
   
   // 创建一个包含背景和提示框内容的 div 元素
   var modal = document.createElement("div");
