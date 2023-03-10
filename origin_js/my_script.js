@@ -993,6 +993,7 @@ function showModal() {
   modal.appendChild(modalContent);
 
   modal.style.overflowY = "scroll";
+  modal.id = 'my-modal';
   
 // //  滑动？？？ 
 // modal.addEventListener("touchmove", function(e) {
