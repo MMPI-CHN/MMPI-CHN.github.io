@@ -991,15 +991,45 @@ function showModal() {
   var modal = document.createElement("div");
   modal.className = "modal";
   modal.appendChild(modalContent);
+
+  modal.style.overflowY = "scroll";
   
-//  滑动？？？ 
-modal.addEventListener("touchmove", function(e) {
-  e.stopPropagation();
-}, false);
+// //  滑动？？？ 
+// modal.addEventListener("touchmove", function(e) {
+//   e.stopPropagation();
+// }, false);
 
 
   // 将提示框添加到页面中
   document.body.appendChild(modal);
+
+  // 获取提示框元素
+const modal = document.getElementById('my-modal');
+
+// 定义变量记录触摸开始的位置和滚动的距离
+let startY = 0;
+let scrollTop = 0;
+
+// 绑定touchstart事件，记录触摸开始的位置和提示框当前的滚动位置
+modal.addEventListener('touchstart', function(e) {
+  startY = e.touches[0].pageY;
+  scrollTop = modal.scrollTop;
+});
+
+// 绑定touchmove事件，计算触摸移动的距离，并将提示框滚动到相应的位置
+modal.addEventListener('touchmove', function(e) {
+  const distanceY = e.touches[0].pageY - startY;
+  modal.scrollTop = scrollTop - distanceY;
+});
+
+// 绑定touchend事件，清除变量的值
+modal.addEventListener('touchend', function() {
+  startY = 0;
+  scrollTop = 0;
+});
+
+
+
 }
 
 function hideModal() {
