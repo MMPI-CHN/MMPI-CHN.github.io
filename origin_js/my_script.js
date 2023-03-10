@@ -985,16 +985,19 @@ function showModal() {
     </div>
   `;
 
-//  滑动？？？ 
-  modalContent.addEventListener("touchmove", function(e) {
-    e.stopPropagation();
-  }, false);
+
   
   // 创建一个包含背景和提示框内容的 div 元素
   var modal = document.createElement("div");
   modal.className = "modal";
   modal.appendChild(modalContent);
   
+//  滑动？？？ 
+modal.addEventListener("touchmove", function(e) {
+  e.stopPropagation();
+}, false);
+
+
   // 将提示框添加到页面中
   document.body.appendChild(modal);
 }
