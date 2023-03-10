@@ -1606,6 +1606,12 @@
 }
 
 @media screen and (max-width:750){
+	#header .content p {
+		text-transform: uppercase;
+		letter-spacing: 0.2rem;
+		font-size: 0.75rem;
+		line-height: 2;
+	}
 	#fuck_the_iphone{
 		text-align:left;
 		font-size: 0.8rem;
