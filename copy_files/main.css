@@ -1238,9 +1238,9 @@
 				-webkit-transition-delay: 0.25s;
 				-ms-transition-delay: 0.25s;
 				transition-delay: 0.25s;
-				/* padding: 3rem 2rem; */
-				/* max-height: 40rem; */
-				/* overflow: hidden; */
+				padding: 3rem 2rem;
+				max-height: 40rem; 
+				overflow: hidden;
 			}
 
 				#header .content .inner > :last-child {
@@ -1608,6 +1608,7 @@
 @media screen and (max-width:750){
 	#fuck_the_iphone{
 		text-align:left;
+		font-size: 0.8rem;
 		margin-top:5px;
 		margin-bottom:5px;
 		width:100vw
