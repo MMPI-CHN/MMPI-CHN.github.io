@@ -1240,7 +1240,7 @@
 				transition-delay: 0.25s;
 				padding: 3rem 2rem;
 				/* max-height: 40rem; */
-				overflow: hidden;
+				/* overflow: hidden; */
 			}
 
 				#header .content .inner > :last-child {
