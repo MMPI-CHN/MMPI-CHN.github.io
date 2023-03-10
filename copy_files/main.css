@@ -1594,7 +1594,7 @@
 	-ms-transition-delay: 0.25s;
 	transition-delay: 0.25s;
 	padding: 3rem 2rem;
-	max-height: 40rem;
+	/* max-height: 40rem; */
 	overflow: hidden;
 }
 
@@ -1610,6 +1610,6 @@
 		text-align:left;
 		margin-top:5px;
 		margin-bottom:5px;
-		width:80vw
+		width:100vw
 	}
 }
