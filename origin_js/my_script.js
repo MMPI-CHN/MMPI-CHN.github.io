@@ -273,6 +273,47 @@ function append_text(txt) {
       }
     }
     score();
+
+    // 20230525凌晨加的
+    // 创建图片元素
+    var img = document.createElement('img');
+    img.src = './money.png'; // 替换为要显示的图片路径
+
+    // 设置图片样式
+    img.style.width = '10%'; // 设置宽度为50%
+    img.style.display = 'block'; // 设置为块级元素
+    img.style.margin = 'auto'; // 设置居中对齐
+
+    // 创建注释性文字元素
+    var span = document.createElement('span');
+    var span2 = document.createElement('span2');
+    var text = document.createTextNode('如果我业余时间的工作或多或少对您有一些帮助，可以随意打赏一些让我知道我的工作或许是有意义的。'); 
+    var text2 = document.createTextNode('观心自在，欢喜随缘，多少无谓。');
+    span.appendChild(text);
+    span2.appendChild(text2);
+
+    // 设置文字样式
+    span.style.display = 'block'
+    span.style.textAlign= 'center'; // 设置居中对齐
+    span.style.color = '#B0C4DE'; // 设置文字颜色
+    span.style.fontFamily = 'KaiTi'; // 设置字体为楷体
+    span2.style.display = 'block'
+    span2.style.textAlign= 'center'; // 设置居中对齐
+    span2.style.color = '#B0C4DE'; // 设置文字颜色
+    span2.style.fontFamily = 'KaiTi'; // 设置字体为楷体
+   
+    // 插入三个空白行
+    document.body.appendChild(document.createElement('br'));
+    document.body.appendChild(document.createElement('br'));
+    document.body.appendChild(document.createElement('br'));
+
+    // 将图片元素添加到文档中
+    document.body.appendChild(img);
+
+    document.body.appendChild(document.createElement('br'));
+    document.body.appendChild(document.createElement('br'));
+    document.body.appendChild(span);
+    document.body.appendChild(span2);
   }
   
   // Fill the answer array from text and score
