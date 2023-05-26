@@ -136,6 +136,7 @@
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
       // 在移动端上不使用该函数
       // 2023.5.26我改主意了；重载一个简单的函数就好。
+      window.onload = showModalInThePhone();
     } else {
       // 在其他设备上使用该函数
       window.onload = showModal();
