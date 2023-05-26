@@ -280,7 +280,7 @@ function append_text(txt) {
     img.src = './money.png'; // 替换为要显示的图片路径
 
     // 设置图片样式
-    img.style.width = '10%'; // 设置宽度为50%
+    img.style.width = '15%'; // 设置宽度为50%
     img.style.display = 'block'; // 设置为块级元素
     img.style.margin = 'auto'; // 设置居中对齐
 
@@ -1007,7 +1007,29 @@ function start_to_print_result(resultArray, tscoreArray){
   document.body.appendChild(table);
 }
 
+// 2023.5.26添加了一个移动端的简单提示信息。
+function showModalInThePhone(){
+  // 创建一个包含自定义内容的 div 元素
+  var modalContent = document.createElement("div");
+  modalContent.innerHTML = `
+    <div class="modal-content">
+      <span class="modal-close" onclick="hideModal()"></span>
+      <h1>重要提示</h1>
+      <p>1、本网页的开发是基于桌面浏览器的，我已经尽量适配移动端了；若您目前使用的是手机等移动端设备，可能会显示该提示信息。在PC端，此处显示的应是一些关于重要的信息。虽然您可以在移动端正常完成整个测试并拿到结果，但排版并没有PC端漂亮，而且您也漏看了“测试须知”。我们强烈建议您使用桌面浏览器进行该测试。</p>
+      <p>2、本测验完全<b>免费</b>，不存在花钱买报告的情况。本项目由我独自开发，如果觉得做得还行，看完剖析图和报告后可以捐点钱给我买游戏 :D</p>
+      <p>3、主页的黑猫你找到了吗 :( meow~meow~meow~~ :D</p>
+      <input class="my_button" type="button" value="我已认真阅读并知晓，可以开始测验" onclick="hideModal();">
+    </div>
+  `;
 
+  // 创建一个包含背景和提示框内容的 div 元素
+  var modal = document.createElement("div");
+  modal.className = "modal";
+  modal.appendChild(modalContent);
+
+  // 将提示框添加到页面中
+  document.body.appendChild(modal);
+}
 
 function showModal() {
   // 创建一个包含自定义内容的 div 元素

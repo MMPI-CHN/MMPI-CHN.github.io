@@ -135,6 +135,7 @@
   <script>
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
       // 在移动端上不使用该函数
+      // 2023.5.26我改主意了；重载一个简单的函数就好。
     } else {
       // 在其他设备上使用该函数
       window.onload = showModal();
@@ -167,6 +168,11 @@
     <p>
       <script type="text/javascript">my_doc_write_all_questions();</script>
 
+      <!-- 2023.5.26添加按钮的注释 -->
+      <div style="width:60%; margin:0 auto;text-align:center; color:#B0C4DE;font-family:KaiTi;">
+        <p>“发送结果”按钮表示您愿意将结果以匿名的方式发给我们留底，“提交测试”按钮则是在当前页面呈现您的测试结果。无论如何，都请您先点击“提交测试”按钮，以避免浏览器卡死导致测试白做。</p>
+      </div>
+      
       <button class="my_button" type="submit" name="check" value="meow~~"><span>发送结果</span></button>
       <!-- 花招：当form中只有一个button时，这个button将会被视为submit，进而触发required，使得无法空题。
             问题：submit是不是也可以直接挂一个onclick？反正在没有后端的情况下，submit也不会“报错” -->
