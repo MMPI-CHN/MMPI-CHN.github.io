@@ -1598,14 +1598,14 @@
 	overflow: hidden;
 }
 
-/* #fuck_the_iphone{
+#fuck_the_iphone{
 	text-align:left;
 	margin-top:5px;
 	margin-bottom:5px;
 	width:750px
-} */
+}
 
-@media screen and (max-width:750){
+@media screen and (max-width:750px){
 	#header .content p {
 		text-transform: uppercase;
 		letter-spacing: 0.2rem;
