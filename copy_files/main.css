@@ -1598,12 +1598,12 @@
 	overflow: hidden;
 }
 
-#fuck_the_iphone{
+/* #fuck_the_iphone{
 	text-align:left;
 	margin-top:5px;
 	margin-bottom:5px;
 	width:750px
-}
+} */
 
 @media screen and (max-width:750){
 	#header .content p {
