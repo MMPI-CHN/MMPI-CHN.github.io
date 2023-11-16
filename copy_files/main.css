@@ -1613,7 +1613,7 @@
 		line-height: 2;
 	}
 	#fuck_the_iphone{
-		text-align:left;
+		/* text-align:left; */
 		font-size: 0.8rem;
 		margin-top:5px;
 		margin-bottom:5px;
