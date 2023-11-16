@@ -241,6 +241,70 @@ function append_text(txt) {
     // Restore mouse pointer
     document.body.style.cursor = "auto";
 
+
+    /* 2023.11.16 尝试对undefined值做出警告 */
+    // 所有需要的值都在tscoreArray中
+    // 根据下面画图的函数推断，L F K对应的脚标应当是3 0 4
+    // 不过L好像不会是undefined？记不清了，先写两个的编码吧，要不然太麻烦。有点懒。
+    let encodeLFK; //从硬件编码里面找到的灵感
+    // if(tscoerArray[3] === undefined && tscoreArray[0] === undefined && tscoreArray[4] === undefined){
+    //   encodeLFK = 1
+    // }
+    if(tscoreArray[0] === undefined && tscoreArray[4] === undefined){
+      encodeLFK = 0b11;
+    }else if(tscoreArray[0] === undefined && tscoreArray[4] !== undefined){
+      encodeLFK = 0b10;
+    }else if(tscoreArray[0] !== undefined && tscoreArray[4] === undefined){
+      encodeLFK = 0b01;
+    }else{
+      encodeLFK = 0b00;
+    }
+
+    switch (encodeLFK) {
+      case 0b01:
+        alert("侦测到您的K值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
+        break;
+      case 0b10:
+        alert("侦测到您的F值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
+        break;
+      case 0b11:
+        alert("侦测到您的F与K值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
+        break;
+      case 0b00:
+      default:
+        // 
+        break;
+    }
+
+    /* 突然想到的另一个优化点：万一他们临床量表也出了问题呢？ */
+    /* 不过这里需要分性别。Mf的脚标是分男女的。 */
+    /* 只选取某几个关键值侦测 */
+    // Female： 6 7 8 9 11 12 13 14 15 16
+    // Male： 6 7 8 9 10 12 13 14 15 16
+    // 暂时不管内容量表。项太多了，不少项我都不认识。
+    if(gender === 0){
+      // Male
+      if(tscoreArray[6] === undefined || tscoreArray[7] === undefined || 
+        tscoreArray[8] === undefined || tscoreArray[9] === undefined || 
+        tscoreArray[9] === undefined || tscoreArray[10] === undefined || 
+        tscoreArray[12] === undefined || tscoreArray[13] === undefined || 
+        tscoreArray[14] === undefined || tscoreArray[15] === undefined || 
+        tscoreArray[16] === undefined){
+          alert("侦测到您的临床量表中有值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
+      }
+    }else{
+      // Female
+      if(tscoreArray[6] === undefined || tscoreArray[7] === undefined || 
+        tscoreArray[8] === undefined || tscoreArray[9] === undefined || 
+        tscoreArray[9] === undefined || tscoreArray[11] === undefined || 
+        tscoreArray[12] === undefined || tscoreArray[13] === undefined || 
+        tscoreArray[14] === undefined || tscoreArray[15] === undefined || 
+        tscoreArray[16] === undefined){
+          alert("侦测到您的临床量表中有值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
+        }
+    }
+
+
     // 根据性别，打出效度量表、临床量表及内容量表的剖析图。可能还会添加特殊项目量表。
     start_to_creat_profile(tscoreArray);
 
@@ -273,6 +337,10 @@ function append_text(txt) {
       }
     }
     score();
+
+
+    /* 2023.11.16 尝试对undefined值做出警告 */
+    // 看了一眼，好像要到score()这个函数里面去找变量
 
     // 20230525凌晨加的
     // 创建图片元素
@@ -390,7 +458,13 @@ function append_text(txt) {
   
   function my_doc_write_question(name, text, text_zh) {
     document.write(text + "<br>", text_zh + "<br>");
+
+    /* 下面这行是原版。现在为了debug，加一个checked标签使该选项默认选中 */ 
     document.write("<input type=\"radio\" id=" + name + " name=\"" + name + "\"value=\"T\" required=\"required\" ><label for=" + name +">是</label>");
+
+    /* For debugging... */
+    // document.write("<input type=\"radio\" id=" + name + " name=\"" + name + "\" value=\"T\" required=\"required\" checked=\"checked\"><label for=" + name + ">是</label>");
+
     // document.write("<input type=\"radio\" name=" + name + " value=\"T\" >是");
     // document.write("<input type=\"radio\" name=" + name + " value=\"F\">否");
     document.write("<input type=\"radio\" id=Not_" + name + " name=\"" + name + "\"value=\"F\" required=\"required\" ><label for=Not_" + name +">否</label>");
