@@ -437,6 +437,12 @@ function append_text(txt) {
   // Set the test gender - called by onclick() event in the form
   function set_gender(g) {
     gender = g;
+
+    // 2024.5.14 尝试加一个不可见的问题，并且通过性别那里的onclick在这里标注出来
+    // 0是男性 1是女性 3是Error
+    const form = document.getElementById("select_all");
+    form.elements['invisible_question'].value = g;
+
     //alert("gender: "+g);
   }
   
@@ -473,7 +479,11 @@ function append_text(txt) {
 
 
 
-  var ans_str = "FTTTTFFFFFTTFTTTTTFFFFTFTTFTTFTTTTTTFFFTTTTFTFFFTFFTTFTTTFTTTTFTTTTFFFFFFFTTTFFFFFFTFFTTTFTFFTTFFFTTTFFFFFTFFTFFFTTTFFFFFFTFTFFTFFTFFTTTFTTFFTFTTFTFFFFTTTFFTTFFFFTFTTTFTTTFTTFFTTTTFFTFFFTFTTTFTFTTTTFFFFFFTTFFTTFTFFFTTFTTFFTFTTTFTTFFFTFTFTTFTFTFTTFFFFFFTFFTTFTTFTFFTTFFFTFTFFTFTFTTTTTTFTFFTFTFFTFFFFFFFTFFFFFFFTTTFTFFFFFTFTFTTTTFFFFTTTTTFFTFFFTTTFFTTTFTFFTFFTTFFTFFFTTTTFTFTTTFTFFTFFTFTFFTTTFTFTFTTTFFTTTFTFFFTTTFTFTFTFTTFTTFFTTTFFTFTFFTTTTTFTTFFFTTFFFTFFTTFTFTFTTTFFTTTFTTFTFFFTTFTFTTFTTFTTFFTTFTFFFTTTFTFTFFTFTFTTTFFFFFTTFFTTTFTTTFTFFTTFFFTFTTFTTTFFFFFFTTFFFFTFFFTTFF"
+  // var ans_str = "FTTTTFFFFFTTFTTTTTFFFFTFTTFTTFTTTTTTFFFTTTTFTFFFTFFTTFTTTFTTTTFTTTTFFFFFFFTTTFFFFFFTFFTTTFTFFTTFFFTTTFFFFFTFFTFFFTTTFFFFFFTFTFFTFFTFFTTTFTTFFTFTTFTFFFFTTTFFTTFFFFTFTTTFTTTFTTFFTTTTFFTFFFTFTTTFTFTTTTFFFFFFTTFFTTFTFFFTTFTTFFTFTTTFTTFFFTFTFTTFTFTFTTFFFFFFTFFTTFTTFTFFTTFFFTFTFFTFTFTTTTTTFTFFTFTFFTFFFFFFFTFFFFFFFTTTFTFFFFFTFTFTTTTFFFFTTTTTFFTFFFTTTFFTTTFTFFTFFTTFFTFFFTTTTFTFTTTFTFFTFFTFTFFTTTFTFTFTTTFFTTTFTFFFTTTFTFTFTFTTFTTFFTTTFFTFTFFTTTTTFTTFFFTTFFFTFFTTFTFTFTTTFFTTTFTTFTFFFTTFTFTTFTTFTTFFTTFTFFFTTTFTFTFFTFTFTTTFFFFFTTFFTTTFTTTFTFFTTFFFTFTTFTTTFFFFFFTTFFFFTFFFTTFF"
+
+  var ans_str = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+
+  // var ans_str = "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
   
   var ans_debug = ans_str.split("");
 
@@ -1174,3 +1184,150 @@ function selectAll() {
 //     break;
 //   }
 // }
+
+
+
+// 20240514 尝试在POST的时候进行检查，以减少无用表项的收集。
+// 定义validateForm函数，用于在提交表单前进行验证
+var ans_dummy = []
+
+function score_rb_dummy(){
+  var form = document.getElementById('select_all');
+  ans_dummy = [undefined];
+    for (let i = 1; i < questions.length; ++i) {
+      let rbv = radio_value(form.elements["Q" + i]);
+      if (rbv) {
+        ans_dummy.push(rbv);
+      } else {
+        ans_dummy.push("?");
+      }
+    }
+    // done...
+}
+
+
+function validateForm() {
+  // 假设我们有两个变量，分别代表值为'T'和'F'的项
+  var countT = 0; // 用于计数值为'T'的项
+  var countF = 0; // 用于计数值为'F'的项
+  var countEmpty = 0; // 用于计数空值的项
+
+  var num_of_void = 0;
+
+  // // 使用表单的id选择表单
+  // var form = document.getElementById('select_all');
+  // for (var i = 0; i < form.elements.length; i++) {
+  //     var element = form.elements[i];
+  //     // 确保只检查需要的输入项类型
+  //     if (element.type !== 'hidden' && element.type !== 'submit' && element.type !== 'button') {
+  //         // 检查输入值
+  //         if (element.value === 'T') {
+  //             countT++;
+  //         } else if (element.value === 'F') {
+  //             countF++;
+  //         } else if (element.value === '') {
+  //             countEmpty++;
+  //         }
+  //     }
+  // }
+
+  // 他给的好像是在乱搞……只是把所有选项都给统了一遍，根本没有统值
+
+  // 不太行，会有连锁反应。先来个蠢驴版本吧，能用就行。
+  // 还是要从全局变量ans入手
+  // ……但是他妈的，这个ans好像必须要计分之后才会有效  
+  // if(ans[0] === ''){
+  // var form = document.getElementById('select_all');
+  // score_rb(form)
+  // }
+
+  score_rb_dummy();
+
+  // for (var i = 0; i < form.elements.length; i++){
+  for(var i = 0; i < ans_dummy.length; i++){
+    if(ans_dummy[i] === 'T'){
+      countT++;
+    }else if(ans_dummy[i] === 'F'){
+      countF++;
+    }else if(ans_dummy[i] = '?'){
+      countEmpty++;
+    }
+  }
+
+  num_of_void = ans_dummy.length - countT - countF;
+
+  // 根据您提供的规则进行检查
+  if (countT > 550 || countF > 550 || countEmpty > 550 || num_of_void > 550) {
+      alert("提交失败：某个条件超过了限制。（1）值为T的大于550项（2）值为F的大于550项（3）空值超过550项");
+      return false; // 阻止表单提交
+  }
+
+  // 如果所有检查都通过，允许表单提交
+  return true;
+}
+
+
+
+// 20240514 一劳永逸，尝试模拟点击
+// 妈的，gpt搞的……我的每一行都有两个ratio T一个 F一个，所以这个遍历实际上有些问题……
+function clickAllToT(formId) {
+  // 使用提供的formId获取表单
+  var form = document.getElementById(formId);
+  if (form) {
+      // 遍历表单中的所有元素
+      for (var i = 0; i < form.elements.length; i++) {
+          var element = form.elements[i];
+          // 检查元素是否为单选按钮
+          if (element.type === 'radio') {
+              // 如果单选按钮的值为"T"，则选中它
+              if (element.value === 'T') {
+                  element.checked = true;
+              }
+          }
+      }
+  } else {
+      console.log('表单ID无效或未找到表单元素。');
+  }
+}
+
+function clickAllToF(formId) {
+  // 使用提供的formId获取表单
+  var form = document.getElementById(formId);
+  if (form) {
+      // 遍历表单中的所有元素
+      for (var i = 0; i < form.elements.length; i++) {
+          var element = form.elements[i];
+          // 检查元素是否为单选按钮
+          if (element.type === 'radio') {
+              // 如果单选按钮的值为"F"，则选中它
+              if (element.value === 'F') {
+                  element.checked = true;
+              }
+          }
+      }
+  } else {
+      console.log('表单ID无效或未找到表单元素。');
+  }
+}
+
+function clickRandomToTOrF(formId) {
+  // 使用提供的formId获取表单
+  var form = document.getElementById(formId);
+  if (form) {
+      // 遍历表单中的所有元素
+      for (var i = 0; i < form.elements.length; i++) {
+          var element = form.elements[i];
+          // 检查元素是否为单选按钮
+          if (element.type === 'radio') {
+              // 生成一个随机数，随机选择T或F
+              var randomValue = Math.random() > 0.5 ? 'T' : 'F';
+              // var randomValue = (i % 2 === 0) ? 'T' : 'F';
+              if (element.value === randomValue) {
+                  element.checked = true;
+              }
+          }
+      }
+  } else {
+      console.log('表单ID无效或未找到表单元素。');
+  }
+}
