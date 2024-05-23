@@ -374,3 +374,17 @@ baidu和google都搜不到这个报错。想了一下，他说主域站点过多
 
 以及最近好像没有大哥给我打钱买游戏，虽然最近压根也没买游戏:(
 （除了GTFO那个极致坐牢玩意）
+
+---
+2024.5.23晚
+
+之前有一位朋友指出了若干问题，最近很忙，我还没来得及修；发现微架构上的工作不太对头，跑完数字综合还不够，似乎要一路干到布线，有点离谱。
+
+另有人指出翻译的一个错误，这个比较紧急，立刻弄了一下，详见 Issue#9
+
+另：
+（1）无意中发现的MMPI-2的民间（？）翻译，效度存疑。
+https://blog.ooyeep.uk/MMPI-2-ming-ni-su-da-duo-xiang-ren-ge-ce-yan-567-ti-ying-wen-yuan-ti-he-zhong-wen-fan-yi
+
+（2）《MMPI-2中文简体字版使用手册》这本书的资源怎么又出来了？我记得我最开始是有电子书资源的（无法下载），后来莫名其妙又找不到了，现在怎么又有了？插个眼，看看以后会不会又没有。强烈建议所有确实希望搞清楚MMPI系列的人阅读这本书。MMPI是有偏的数学。
+https://book.sciencereading.cn/shop/book/Booksimple/show.do?id=BBD17DCED8D1311C4E053010B0A0ADAAD000
