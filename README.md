@@ -388,3 +388,10 @@ https://blog.ooyeep.uk/MMPI-2-ming-ni-su-da-duo-xiang-ren-ge-ce-yan-567-ti-ying-
 
 （2）《MMPI-2中文简体字版使用手册》这本书的资源怎么又出来了？我记得我最开始是有电子书资源的（无法下载），后来莫名其妙又找不到了，现在怎么又有了？插个眼，看看以后会不会又没有。强烈建议所有确实希望搞清楚MMPI系列的人阅读这本书。MMPI是有偏的数学。
 https://book.sciencereading.cn/shop/book/Booksimple/show.do?id=BBD17DCED8D1311C4E053010B0A0ADAAD000
+
+
+---
+2024.5.28
+
+日常维护（换源 3->4）
+之前几天就已经满了，但是没精力来换源，虽然就是两行注释的事。
