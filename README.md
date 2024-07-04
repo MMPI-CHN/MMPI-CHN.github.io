@@ -406,3 +406,8 @@ https://book.sciencereading.cn/shop/book/Booksimple/show.do?id=BBD17DCED8D1311C4
 
 日常维护 1->3
 
+---
+2024.7.4
+
+虽说最近一直在干别的，没空把之前剩下的问题弄完，不过在收到邮件数基本不变的情况下，github star没变且要不到饭，估计是什么设计出了问题。
+强烈怀疑我的那个“主页”并没有被google优先显示出来，之后可能需要再做一个回退至主页的操作。
