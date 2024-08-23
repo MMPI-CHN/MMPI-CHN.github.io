@@ -125,7 +125,9 @@ function append_text(txt) {
         }
       }
       // Append results to scale table
-      append_tr(scale_table, rin[i][0][0], rin[i][0][1], rawscore, " ", rin[i][2 + gender][rawscore], " ");
+      // append_tr(scale_table, rin[i][0][0], rin[i][0][1], rawscore, " ", rin[i][2 + gender][rawscore], " ");
+      // 20240823 同样的，值为undefined的时候，显示别的东西。注意TRIN与VRIN与其他的表项是分开处理的。话说这两项是什么意思来着？
+      append_tr(scale_table, rin[i][0][0], rin[i][0][1], rawscore, " ", rin[i][2 + gender][rawscore] === undefined ? "过高或过低" : rin[i][2 + gender][rawscore], " ");
     }
   
     // Score the scales and critical items
@@ -202,7 +204,10 @@ function append_text(txt) {
 
         tscoreArray.push(tscore);
 
-        append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore === undefined ? " " : kscore, tscore, percent.toPrecision(3));
+        // append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore === undefined ? " " : kscore, tscore, percent.toPrecision(3));
+        // 20240823 尝试在tscore为undefined时，显示别的东西？
+        append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore === undefined ? " " : kscore, tscore === undefined ? "过高或过低" : tscore, percent.toPrecision(3));
+
   
         // Update profile elevation for the 8 scales
         switch (scales[i][0][1]) {
@@ -384,6 +389,9 @@ function append_text(txt) {
     document.body.appendChild(span2);
   }
   
+  // 20240823 尝试在“界面”中把结果字符串打出来给用户看，并且附到邮件中发给我
+  var global_ans;
+
   // Fill the answer array from text and score
   function score_text(anstext) {
     //alert("Score Text: "+anstext.length);
@@ -430,6 +438,11 @@ function append_text(txt) {
     alert((n - 1) + " answers entered");
     // If too few valid characters where processed, fill the remaining answers with '?'
     for (; n < questions.length; ++n) { ans.push("?"); }
+
+    // // 20240823 拷贝所有的“结果”，注意附上性别
+    // global_ans = ans;
+    // // global_ans = gender.toString() + ans;
+
     // Score it
     score();
   }
@@ -1026,7 +1039,7 @@ var damn = [3, 0, 4, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16];
 // function start_to_print_result(tscoreArray){
 function start_to_print_result(resultArray, tscoreArray){
 
-
+  // 打未修正的表
   let table = document.createElement("table");
   table.style.borderCollapse = "collapse";
   table.style.width = "80%";
@@ -1049,6 +1062,8 @@ function start_to_print_result(resultArray, tscoreArray){
   let header2 = document.createElement("th");
   header2.textContent = "最基本的部分解释";
   header2.style.padding = "8px";
+  // 20240823尝试引入对“修正分”的描述 
+  // header2.style.color = "red"
   headerRow.appendChild(header2);
 
   // 创建数据行和单元格
@@ -1078,8 +1093,11 @@ function start_to_print_result(resultArray, tscoreArray){
     else if(tscoreArray[damn[i]] >= resultArray[i][2]){
       cell2.textContent = resultArray[i][4];
     }
-    else{
+    else if(tscoreArray[damn[i]] < resultArray[i][2]){
       cell2.textContent = resultArray[i][5];
+    }
+    else{
+      cell2.textContent = "您的分数超出了量表范围。详情请见 github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）"
     }
 
     // cell2.textContent = resultArray[i][1];
@@ -1087,8 +1105,176 @@ function start_to_print_result(resultArray, tscoreArray){
     row.appendChild(cell2);
   }
 
+  // 20240823 再加打一张进行了-8修正的表
+  let table2 = document.createElement("table");
+  table2.style.borderCollapse = "collapse";
+  table2.style.width = "80%";
+  table2.setAttribute("border", "3");
+  table2.style.margin = "auto";
+  table2.setAttribute("bgcolor", "#B0C4DE");
+
+  // 创建表头行
+  let headerRow2 = document.createElement("tr");
+  headerRow2.style.borderBottom = "2px solid black";
+  table2.appendChild(headerRow2);
+
+  // 创建表头单元格
+  let header3 = document.createElement("th");
+  header3.textContent = "各量表的一致性T分（-8修正）";
+  header3.style.padding = "8px";
+  header3.style.borderRight = "1px solid black";
+  header3.style.color = "red"
+  headerRow2.appendChild(header3);
+
+  let header4 = document.createElement("th");
+  header4.textContent = "最基本的部分解释（-8修正）";
+  header4.style.padding = "8px";
+  // 20240823尝试引入对“修正分”的描述 
+  header4.style.color = "red"
+  headerRow2.appendChild(header4);
+
+  // 创建数据行和单元格
+  // for (let i = 0; i < resultArray.length; i++) {
+    // 14 === 3 + 9 + 2(Mf)
+  for (let i = 0; i < 13; i++) {
+    // if(i === 12 || i === 7){
+    if(i === 7){
+      // 懒得打Mf的表了...
+      continue;
+    }
+
+    let row = document.createElement("tr");
+    table2.appendChild(row);
+
+    let cell1 = document.createElement("td");
+    // 注意！如果原分数“合理”，则不做出-8修正。真他妈麻烦。
+    let abnormal_flag;
+    if(tscoreArray[damn[i]] >= resultArray[i][1]){
+      abnormal_flag = true;
+    }else{
+      abnormal_flag = false;
+    }
+
+    if(abnormal_flag){
+      cell1.textContent = resultArray[i][0] + " : " + (tscoreArray[damn[i]] - 8);
+    }else{
+      cell1.textContent = resultArray[i][0] + " : " + (tscoreArray[damn[i]]);
+    }
+    cell1.style.padding = "8px";
+    cell1.style.borderRight = "1px solid black";
+    if(abnormal_flag){
+      cell1.style.color = "red";
+    }else{
+      // do nothing
+    }
+    row.appendChild(cell1);
+
+    let cell2 = document.createElement("td");
+
+    if(abnormal_flag){
+      if(tscoreArray[damn[i]] - 8 >= resultArray[i][1]){
+        cell2.textContent = resultArray[i][3];
+      }
+      else if(tscoreArray[damn[i]] - 8 >= resultArray[i][2]){
+        cell2.textContent = resultArray[i][4];
+      }
+      else if(tscoreArray[damn[i]] - 8 < resultArray[i][2]){
+        cell2.textContent = resultArray[i][5];
+      }
+      else{
+        cell2.textContent = "您的分数超出了量表范围。详情请见 github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）"
+      }
+    }else{
+      if(tscoreArray[damn[i]] >= resultArray[i][1]){
+        cell2.textContent = resultArray[i][3];
+      }
+      else if(tscoreArray[damn[i]] >= resultArray[i][2]){
+        cell2.textContent = resultArray[i][4];
+      }
+      else if(tscoreArray[damn[i]] < resultArray[i][2]){
+        cell2.textContent = resultArray[i][5];
+      }
+      else{
+        cell2.textContent = "您的分数超出了量表范围。详情请见 github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）"
+      }
+    }
+
+    // cell2.textContent = resultArray[i][1];
+    cell2.style.padding = "8px";
+    row.appendChild(cell2);
+  }
+
+
+  // 创建注释性文字元素
+  var span = document.createElement('span');
+  var span2 = document.createElement('span2');
+  var span3 = document.createElement('span3')
+  var text = document.createTextNode('由于我们使用的是美国常模，因此最终算出的T分可能偏高。根据经验，我们对T分进行了-8的修正。'); 
+  var text2 = document.createTextNode('注意！结果仅供参考！');
+  var text3 = document.createTextNode('详情请见 https://github.com/MMPI-CHN/MMPI-CHN.github.io/blob/main/%E5%85%B3%E4%BA%8E%E5%B8%B8%E6%A8%A1%E7%9A%84%E9%80%9A%E4%BF%97%E8%A7%A3%E9%87%8A.txt')
+  span.appendChild(text);
+  span2.appendChild(text2);
+  span3.appendChild(text3);
+  
+  var span4 = document.createElement('span4');
+  var text4 = document.createTextNode('如果有需要，可以保留您的原始选项。您做出的选择是（0代表male 1代表female）：' + gender.toString() + ans);
+  span4.appendChild(text4);
+
+  // 设置文字样式
+  span.style.display = 'block'
+  span.style.textAlign= 'center'; // 设置居中对齐
+  span.style.color = "red"; // 设置文字颜色
+  span.style.fontFamily = 'KaiTi'; // 设置字体为楷体
+  span.style.fontSize = '16px';
+  span2.style.display = 'block'
+  span2.style.textAlign= 'center'; // 设置居中对齐
+  span2.style.color = "red"; // 设置文字颜色
+  span2.style.fontFamily = 'KaiTi'; // 设置字体为楷体
+  span2.style.fontSize = '24px';
+
+  span3.style.display = 'block'
+  span3.style.textAlign= 'center'; // 设置居中对齐
+  span3.style.color = "red"; // 设置文字颜色
+  span3.style.fontFamily = 'KaiTi'; // 设置字体为楷体
+
+  span4.style.display = 'block'
+  span4.style.textAlign= 'center'; // 设置居中对齐
+  span4.style.color = "#B0C4DE"; // 设置文字颜色
+  span4.style.fontFamily = 'KaiTi'; // 设置字体为楷体
+  span4.style.wordWrap = 'break-word'; // 允许在单词内换行
+  
   // 将表格添加到页面中
+  // 插入三个空白行
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+
   document.body.appendChild(table);
+
+  // 插入三个空白行
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+
+  document.body.appendChild(span);
+  document.body.appendChild(span2);
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(span3);
+
+  // 插入三个空白行
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+
+  document.body.appendChild(table2);
+
+  // 插入三个空白行
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));
+
+  document.body.appendChild(span4);
+
 }
 
 // 2023.5.26添加了一个移动端的简单提示信息。
