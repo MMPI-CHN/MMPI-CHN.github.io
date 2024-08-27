@@ -477,7 +477,7 @@ https://book.sciencereading.cn/shop/book/Booksimple/show.do?id=BBD17DCED8D1311C4
 
 2、submit的附加value
 
-这里面似乎也可以放结果字符串。但是有意义吗？反正统计的时候肯定必须得去下载邮件，躲不掉，似乎。
+这里面似乎也可以放结果字符串。但是有意义吗？反正统计的时候肯定得去下载邮件，躲不掉，似乎。
 
 3、分析框架
 
