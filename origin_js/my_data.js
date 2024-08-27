@@ -2164,8 +2164,8 @@
       ,
     ], [
       [, "LW5", "Lachar-Wrobel Critical Items - Deviant Thinking and Experiences"],
-      [32, 60, 96, 122, 198, 298, 307, 316, 319, 427],
-      [],
+      [32, 60, 96, 122, 198, 298, 307, 316, 319,],
+      [427],
       ,
       ,
     ], [
