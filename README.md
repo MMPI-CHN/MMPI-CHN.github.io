@@ -544,3 +544,10 @@ https://book.sciencereading.cn/shop/book/Booksimple/show.do?id=BBD17DCED8D1311C4
 
 日常维护 3->4
 
+---
+2024.10.15
+
+发现两个小问题。画图那里，是校正不是矫正，之前一直没发现。
+
+Si的结语里面好像有错别字。
+
