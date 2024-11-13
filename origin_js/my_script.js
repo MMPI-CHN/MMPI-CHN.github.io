@@ -694,7 +694,7 @@ function creat_trait_profile_1_female(tscoreArray){
     labels: [scales[3][0][1], scales[0][0][1], scales[4][0][1], scales[6][0][1], scales[7][0][1], scales[8][0][1], scales[9][0][1], scales[11][0][1], scales[12][0][1], scales[13][0][1], scales[14][0][1], scales[15][0][1], scales[16][0][1]],
     datasets: [
       {
-        label: "K分矫正的一致性T分",
+        label: "K分校正的一致性T分",
         fill: false,
         lineTension: 0.025,
         borderRadius: 0,
@@ -794,7 +794,7 @@ function creat_trait_profile_1_male(tscoreArray){
     labels: [scales[3][0][1], scales[0][0][1], scales[4][0][1], scales[6][0][1], scales[7][0][1], scales[8][0][1], scales[9][0][1], scales[10][0][1], scales[12][0][1], scales[13][0][1], scales[14][0][1], scales[15][0][1], scales[16][0][1]],
     datasets: [
       {
-        label: "K分矫正的一致性T分",
+        label: "K分校正的一致性T分",
         fill: false,
         lineTension: 0.025,
         borderRadius: 0,
@@ -896,7 +896,7 @@ function creat_trait_profile_2(tscoreArray){
     labels: [scales[48][0][1], scales[49][0][1], scales[50][0][1], scales[51][0][1], scales[52][0][1], scales[53][0][1], scales[54][0][1], scales[55][0][1], scales[56][0][1], scales[57][0][1], scales[58][0][1], scales[59][0][1], scales[60][0][1], scales[61][0][1], scales[62][0][1]],
     datasets: [
       {
-        label: "K分矫正的一致性T分",
+        label: "K分校正的一致性T分",
         fill: false,
         lineTension: 0.025,
         borderRadius: 0,
