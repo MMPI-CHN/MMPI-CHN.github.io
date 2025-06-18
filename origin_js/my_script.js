@@ -18,7 +18,10 @@ function append_text(txt) {
   // Append row data to a row
   function append_td(row, txt) {
     let tdata = document.createElement("td");
-    tdata.appendChild(document.createTextNode(txt));
+    if (txt.html !== undefined)
+      tdata.innerHTML = txt.html;
+    else 
+      tdata.appendChild(document.createTextNode(txt));
     row.appendChild(tdata);
   }
   
@@ -76,7 +79,7 @@ function append_text(txt) {
   
     // Variable declarations
     let i, j, tscale, q, n, s, rp;
-    let k, rawscore, kscore, tscore, percent;
+    let K, rawscore, tscore, percent;
     let t_cnt, f_cnt, cs_cnt, pe;
   
     // Make the scale and critical item tables
@@ -84,6 +87,7 @@ function append_text(txt) {
     let ci_table = make_table("Scale", "Scale Description", "Question", "Answer", "Question Text");
 
     let tscoreArray = [];
+    let tscoreArrayWhat = [];
   
     // Count the number of True, False, and Can't Say answers
     n = longform ? questions.length : 371;
@@ -106,9 +110,9 @@ function append_text(txt) {
     --q;
   
     // Add T/F/? stats to scale table
-    append_tr(scale_table, "True", " ", t_cnt, " ", " ", (t_cnt * 100 / q).toPrecision(3));
-    append_tr(scale_table, "False", " ", f_cnt, " ", " ", (f_cnt * 100 / q).toPrecision(3));
-    append_tr(scale_table, "?", " ", cs_cnt, " ", " ", (cs_cnt * 100 / q).toPrecision(3));
+    append_tr(scale_table, "True", " ", t_cnt, " ", " ", (t_cnt * 100 / q).toFixed(1));
+    append_tr(scale_table, "False", " ", f_cnt, " ", " ", (f_cnt * 100 / q).toFixed(1));
+    append_tr(scale_table, "?", " ", cs_cnt, " ", " ", (cs_cnt * 100 / q).toFixed(1));
   
     // Score the TRIN/VRIN scales
     // Iterate the *RIN scales
@@ -131,7 +135,7 @@ function append_text(txt) {
     }
   
     // Score the scales and critical items
-    k = 0;
+    K = 0;
     pe = 0;
     // Iterate all the scales
     for (i = 0; i < scales.length; ++i) {
@@ -153,7 +157,7 @@ function append_text(txt) {
             ++rawscore;
             // If this is a critcal item, add it to the critical items table
             if (tscale === undefined) {
-              append_tr(ci_table, scales[i][0][1], scales[i][0][2], q, "True", questions[q]);
+              append_tr(ci_table, scales[i][0][1], scales[i][0][2], q, "True", questions_zh[q]);
             }
             break;
           case "F":
@@ -170,7 +174,7 @@ function append_text(txt) {
             ++n;
             ++rawscore;
             if (tscale === undefined) {
-              append_tr(ci_table, scales[i][0][1], scales[i][0][2], q, "False", questions[q]);
+              append_tr(ci_table, scales[i][0][1], scales[i][0][2], q, "False", questions_zh[q]);
             }
             break;
           case "T":
@@ -182,32 +186,19 @@ function append_text(txt) {
       // T score table must be defined, otherwise this is a critical item
       if (tscale !== undefined) {
         // Capture K for future use
-        if (scales[i][0][0] === "K") { k = rawscore; }
+        if (scales[i][0][0] === "K") { K = rawscore; }
         // If there is a K correction, use it
-        if (tscale[0]) {
-          // Adjust with K
-          kscore = k * tscale[0] + rawscore;
-          // Round off and make integer
-          kscore = Math.floor(kscore + 0.5);
-          // T score lookup of corrected score
-          tscore = tscale[kscore + 1];
-          // No K correction
-        } else {
-          // K score is undefinded
-          kscore = undefined;
-          // T score lookup of raw score
-          tscore = tscale[rawscore + 1];
-        }
+        let kscore = tscale[0] ? K * tscale[0] + rawscore : rawscore;
+        tscore = tscale[1] * kscore + tscale[2];
         // Calculate percent answered
         percent = n * 100 / (scales[i][1].length + j);
         // Append results to score table
 
         tscoreArray.push(tscore);
+        tscoreArrayWhat.push(scales[i][0][1]);
 
         // append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore === undefined ? " " : kscore, tscore, percent.toPrecision(3));
-        // 20240823 尝试在tscore为undefined时，显示别的东西？
-        append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore === undefined ? " " : kscore, tscore === undefined ? "过高或过低" : tscore, percent.toPrecision(3));
-
+        append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore.toFixed(1), colorize(tscore), percent.toFixed(1));
   
         // Update profile elevation for the 8 scales
         switch (scales[i][0][1]) {
@@ -246,69 +237,19 @@ function append_text(txt) {
     // Restore mouse pointer
     document.body.style.cursor = "auto";
 
-
+    console.log(tscoreArrayWhat)
     /* 2023.11.16 尝试对undefined值做出警告 */
-    // 所有需要的值都在tscoreArray中
-    // 根据下面画图的函数推断，L F K对应的脚标应当是3 0 4
-    // 不过L好像不会是undefined？记不清了，先写两个的编码吧，要不然太麻烦。有点懒。
-    let encodeLFK; //从硬件编码里面找到的灵感
-    // if(tscoerArray[3] === undefined && tscoreArray[0] === undefined && tscoreArray[4] === undefined){
-    //   encodeLFK = 1
-    // }
-    if(tscoreArray[0] === undefined && tscoreArray[4] === undefined){
-      encodeLFK = 0b11;
-    }else if(tscoreArray[0] === undefined && tscoreArray[4] !== undefined){
-      encodeLFK = 0b10;
-    }else if(tscoreArray[0] !== undefined && tscoreArray[4] === undefined){
-      encodeLFK = 0b01;
-    }else{
-      encodeLFK = 0b00;
-    }
-
-    switch (encodeLFK) {
-      case 0b01:
-        alert("侦测到您的K值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
-        break;
-      case 0b10:
-        alert("侦测到您的F值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
-        break;
-      case 0b11:
-        alert("侦测到您的F与K值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
-        break;
-      case 0b00:
-      default:
-        // 
-        break;
-    }
-
-    /* 突然想到的另一个优化点：万一他们临床量表也出了问题呢？ */
-    /* 不过这里需要分性别。Mf的脚标是分男女的。 */
-    /* 只选取某几个关键值侦测 */
-    // Female： 6 7 8 9 11 12 13 14 15 16
-    // Male： 6 7 8 9 10 12 13 14 15 16
-    // 暂时不管内容量表。项太多了，不少项我都不认识。
-    if(gender === 0){
-      // Male
-      if(tscoreArray[6] === undefined || tscoreArray[7] === undefined || 
-        tscoreArray[8] === undefined || tscoreArray[9] === undefined || 
-        tscoreArray[9] === undefined || tscoreArray[10] === undefined || 
-        tscoreArray[12] === undefined || tscoreArray[13] === undefined || 
-        tscoreArray[14] === undefined || tscoreArray[15] === undefined || 
-        tscoreArray[16] === undefined){
-          alert("侦测到您的临床量表中有值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
+    let outOfRanges = []
+    for (let i = 0; i < tscoreArray.length; i++) {
+      if (!inRange(tscoreArray[i])) {
+        outOfRanges.push(tscoreArrayWhat[i]);
       }
-    }else{
-      // Female
-      if(tscoreArray[6] === undefined || tscoreArray[7] === undefined || 
-        tscoreArray[8] === undefined || tscoreArray[9] === undefined || 
-        tscoreArray[9] === undefined || tscoreArray[11] === undefined || 
-        tscoreArray[12] === undefined || tscoreArray[13] === undefined || 
-        tscoreArray[14] === undefined || tscoreArray[15] === undefined || 
-        tscoreArray[16] === undefined){
-          alert("侦测到您的临床量表中有值是undefined，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）");
-        }
     }
 
+    if (outOfRanges.length > 0) {
+      alert("侦测到您的" + outOfRanges.join(",") + "值超标，您可能没能很好理解题意，导致了误选。您的数据已经超出了量表的衡量范围。详见 github issue #3")
+      window.open("https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3")
+    }
 
     // 根据性别，打出效度量表、临床量表及内容量表的剖析图。可能还会添加特殊项目量表。
     start_to_creat_profile(tscoreArray);
@@ -499,6 +440,27 @@ function append_text(txt) {
   // var ans_str = "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
   
   var ans_debug = ans_str.split("");
+
+function inRange(value) { return value >= 30 && value <= 120; }
+function colorize(value) {
+  function pickColor(value) {
+    if (!inRange(value))
+      return 'black'
+    if (value < 45)
+      return '#a50026'
+    if (value < 60)
+      return '#006837'
+    if (value < 70)
+      return '#866a01'
+    if (value < 80)
+      return '#f46d43'
+    else
+      return '#a50026'
+  }
+  return { html: `<span style="color:${pickColor(value)}">${value.toFixed(1)}</span>`};
+}
+
+
 
 
   function my_test() {
@@ -1456,7 +1418,7 @@ function validateForm() {
 
 // 20240514 一劳永逸，尝试模拟点击
 // 妈的，gpt搞的……我的每一行都有两个ratio T一个 F一个，所以这个遍历实际上有些问题……
-function clickAllToT(formId) {
+function clickAllToT(formId = "select_all") {
   // 使用提供的formId获取表单
   var form = document.getElementById(formId);
   if (form) {
@@ -1476,7 +1438,7 @@ function clickAllToT(formId) {
   }
 }
 
-function clickAllToF(formId) {
+function clickAllToF(formId = "select_all") {
   // 使用提供的formId获取表单
   var form = document.getElementById(formId);
   if (form) {
@@ -1496,7 +1458,7 @@ function clickAllToF(formId) {
   }
 }
 
-function clickRandomToTOrF(formId) {
+function clickRandomToTOrF(formId = "select_all") {
   // 使用提供的formId获取表单
   var form = document.getElementById(formId);
   if (form) {
