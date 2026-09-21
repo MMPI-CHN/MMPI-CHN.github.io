@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+
+  <meta name="keywords" content="MMPI-2, 中, 英, 测试">
+	<meta name="description" content="你可以在该页面进行MMPI测试，并可以在测试完成后得到原始结果、人格剖析图以及基本的解释。">
+	<meta name="google-site-verification" content="Nn_Nci8x_SMFc-Z2NeVifZ0_MTspzOyIefsEXAPPJgE" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+
+
+  <title>MMPI-2中英对照测试</title>
+  <script type="text/javascript" src="origin_js/my_data.js"></script>
+  <script type="text/javascript" src="origin_js/my_script.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+
+  <link rel="shortcut icon" href="logo.jpg" type="image/x-icon">
+  
+
+  <!-- <link rel="stylesheet" href="./copy_files/main.css"> -->
+
+  <style>
+	body {background-color: #1b1f22;
+        /*background-image: linear-gradient(#1b1f22, #708090);*/
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 60%;
+      background-color: rgba(203, 222, 211, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+
+      
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    .modal-content {
+      background-color: rgb(204, 210, 199);
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      font-family:Times New Roman,Hei,Kaiti;
+      text-align: center;
+    }
+    
+    
+    .modal-content h1 {
+      margin-top: 0;
+      text-align: center;
+    }
+    
+    .modal-content p {
+      text-align: left;
+      margin-bottom: 0;
+    }
+
+    
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+    }
+    
+    .modal-close:before {
+      content: "×";
+      font-size: 24px;
+    }
+
+  </style>
+  <style>
+    label {
+        margin-right: 15px;
+        line-height: 32px;
+      }
+      
+    input[type="radio"] {
+        appearance: none;
+      
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+      
+        border: 2px solid #999;
+        transition: 0.2s all linear;
+        margin-right: 5px;
+      
+        position: relative;
+        top: 4px;
+      }
+      
+      input:checked {
+        border: 6px solid #B0C4DE;
+      }
+      
+      /* from web... */
+      .my_button {
+        border-radius: 12px;
+        padding: 8px 12px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 1.2rem;
+        margin: 4px 2px;
+        -webkit-transition-duration: 0.4s; /* Safari */
+        transition-duration: 0.4s;
+        cursor: pointer;
+        font-family:Arial,Kaiti;
+    }
+    
+    .my_button {
+        background-color: #696969; 
+        color: white; 
+        border: 2px solid #B0C4DE;
+    }
+    
+    .my_button:hover {
+        background-color: #B0C4DE;
+        color: white;
+    }
+  </style>
+</head>
+<body><div>
+
+  <!-- 尝试弹出提升框 -->
+  <script>
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // 在移动端上不使用该函数
+      // 2023.5.26我改主意了；重载一个简单的函数就好。
+      window.onload = showModalInThePhone();
+    } else {
+      // 在其他设备上使用该函数
+      window.onload = showModal();
+    }
+  </script>
+  
+    <div style="width:100%;text-align:center;color:#F0F8FF;font-size:2rem;font-family:Times New Roman,Hei,Kaiti">
+        <h1>
+            <b>MMPI-2中英对照测试</b>
+        </h1>
+    </div>
+
+  <div style="width:100%;text-align:center;color:#F0F8FF;font-size:1.5rem;font-family:Arial,Hei,Kaiti">
+  <!-- <div id="my_damn_form"> -->
+
+  <form name="config" action="#">
+    <p>
+      Assigned sex <br>您的性别:<br>
+      <input type="radio" name="gender" value="M" onclick="set_gender(0);" checked="">Male
+      <input type="radio" name="gender" value="F" onclick="set_gender(1);">Female
+    </p>
+    <p>
+      Test 567 / 370:<br>测试版本：完整版（567） 或 简略版（370）<br>
+      <input type="radio" name="testform" value="L" onclick="use_long_form(true);" checked="">Long
+      <input type="radio" name="testform" value="S" onclick="use_long_form(false);">Short
+    </p>
+  </form>
+
+  <!-- 2023.11.15 尝试用trick来白嫖表单收集次数 -->
+  <!-- 只是更改action的内容，康康会不会被出警 -->
+  <!-- https://formspree.io/f/mgebzeqq 对应的是Crime1 -->
+  <!-- https://formspree.io/f/mknlaree 对应的是Crime2 -->
+  <!-- https://formspree.io/f/myyqajok 对应的是Crime3 -->
+  <!-- https://formspree.io/f/xoqgvzbr 对应的是Crime4 -->
+  
+  <!-- 20240514 尝试在POST的时候进行检查，以减少无用表项的收集。 -->
+  <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/mgebzeqq" method="POST">
+<!--   <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/myyqajok" method="POST"> -->
+<!--   <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/xoqgvzbr" method="POST"> -->
+    <p>
+
+      <!-- 2024.5.14 尝试加一个不可见的问题，并且通过性别那里的onclick在这里标注出来，从而可以传输性别。
+            虽然直接把上面那项复制下来也能进行数据传输……但是这堆代码的结构 还是不要乱动为妙。 -->
+      <!-- 还是默认male吧……因为不一定会有click这个动作 -->
+      <input type="hidden" name="invisible_question" id="invisible_question" value="0">
+      <!-- 。。。。。。。。。。。。。。。。。。。。。。。。。。。。 -->
+
+      <script type="text/javascript">my_doc_write_all_questions();</script>
+
+      <!-- 2023.5.26添加按钮的注释 -->
+      <div style="width:60%; margin:0 auto;text-align:center; color:#B0C4DE;font-family:KaiTi;">
+        <p>“发送结果”按钮表示您愿意将结果以匿名的方式发给我们留底，“提交测试”按钮则是在当前页面呈现您的测试结果。无论如何，都请您先点击“提交测试”按钮，以避免浏览器卡死导致测试白做。</p>
+      </div>
+      
+      <button class="my_button" type="submit" name="check" value="meow~~"><span>发送结果</span></button>
+      <!-- 花招：当form中只有一个button时，这个button将会被视为submit，进而触发required，使得无法空题。
+            问题：submit是不是也可以直接挂一个onclick？反正在没有后端的情况下，submit也不会“报错” -->
+      <br>
+      <!-- <br> -->
+      <input class="my_button" type="button" value="提交测试" onclick="score_rb(document.forms.questions);">
+      <br>
+      
+      <!-- For Debuging... -->
+      <!-- <input class="my_button" type="button" value="Debug" onclick="my_test();">
+      <br> -->
+      <!-- 20240514 来一个模拟点击 -->
+      <!-- <input class="my_button" type="button" value="模拟点击T" onclick="clickAllToT('select_all');">
+      <br>
+
+      <input class="my_button" type="button" value="模拟点击F" onclick="clickAllToF('select_all');">
+      <br>
+
+      <input class="my_button" type="button" value="随机模拟点击" onclick="clickRandomToTOrF('select_all');">
+      <br> -->
+
+      <!-- For Drawing... -->
+      <!-- <input class="my_button" type="button" value="绘制人格剖析图" onclick="creat_trait_profile();">
+      <input class="my_button" type="button" value="精神逐渐异常" onclick="selectAll();"> -->
+
+
+      <!-- <button name="提交测试" value="提交测试" onclick="score_rb(document.forms.questions);">提交测试</button> -->
+      <br><br>
+    <p></p>
+  </form>
+
+  </div>
+
+
+  <div id="myCharts" style="width:90%;height:90%;margin:auto">
+    <canvas id="myChart1"></canvas>
+    <br><br><br><br>
+    <canvas id="myChart2"></canvas>
+    <br><br><br><br>
+  </div>
+
+</div><!--这种在body上直接加div的方法能解决渐变的问题吗？-->></body>
+
+
+</html>
