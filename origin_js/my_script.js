@@ -333,7 +333,9 @@ function append_text(txt) {
   // Fill the answer array with radio button state and score
   function score_rb(form) {
     ans = [undefined];
-    for (let i = 1; i < questions.length; ++i) {
+    // 2026-09 修复：短卷只读前 370 题，其余留空（不再伪造成 197 个 "?"）
+    const __limit = longform ? questions.length : (short_form_question_count() + 1);
+    for (let i = 1; i < __limit; ++i) {
       let rbv = radio_value(form.elements["Q" + i]);
       if (rbv) {
         ans.push(rbv);
@@ -460,10 +462,18 @@ function append_text(txt) {
   }
   
   // Set the test length - called by onclick() event in the form
+  // 2026-09 修复：原实现只切换了 div 的显示，从未更新 longform 变量，
+  // 导致选择"短卷"时计分仍按 567 题进行，第 371~567 题全部计为 "?"（197 个未答），
+  // CS 计数飙升、内容量表原始分接近 0，整张剖析图作废。
   function use_long_form(lf) {
+    longform = lf;
     let lfd = document.getElementById("longformdiv");
     lfd.style.display = lf ? "inline" : "none";
   }
+
+  // 短卷（前 370 题）可有效计分的量表：13 个基础量表（L F K 1-0）最大题号 <= 370。
+  // 内容量表与 Fb 依赖 371 题以后的项目，短卷下无效，必须不予呈现。
+  function short_form_question_count() { return 370; }
   
   
   
@@ -682,7 +692,16 @@ function start_to_creat_profile(tscoreArray){
   else{
     creat_trait_profile_1_female(tscoreArray);
   }
-  creat_trait_profile_2(tscoreArray);
+  // 2026-09 修复：内容量表全部依赖 371 题以后的项目，短卷下无效，不予呈现
+  if (longform) {
+    creat_trait_profile_2(tscoreArray);
+  } else {
+    let _w = document.createElement("p");
+    _w.style.color = "#FFD700";
+    _w.style.textAlign = "center";
+    _w.textContent = "您选择了短卷（前 370 题）。内容量表依赖第 371 题以后的项目，因此未予呈现。如需内容量表，请选择长卷重新作答。";
+    document.getElementsByTagName("body")[0].appendChild(_w);
+  }
   // creat_trait_profile_3();
 }
 
@@ -1032,12 +1051,22 @@ var resultArray = [
 ];
 
 // 这个地方没写好……但是可以正确运行。注意与tscoreArray的下标对应关系
-var damn = [3, 0, 4, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16];
+// 2026-09 修复：原数组把 Mf 的下标写死为 11（女性条目）。男性受测者取 scales[11][3]，
+// 那是个空数组，T 分恒为 undefined，于是每一个男性的 Mf 都显示"您的分数超出了量表范围"。
+// 正确下标：10 = Masculinity-Femininity - Male，11 = ... - Female。
+function damn_for_gender(g) {
+  return [3, 0, 4, 6, 7, 8, 9, (g ? 11 : 10), 12, 13, 14, 15, 16];
+}
+var damn = damn_for_gender(0);
+
+// damn 的顺序对应的量表代号，供中国常模换算查表用（见 origin_js/mmpi_cn_norms.js）
+var CN_KEYS = ["L", "F", "K", "Hs", "D", "Hy", "Pd", "Mf", "Pa", "Pt", "Sc", "Ma", "Si"];
 
 
 // 打表
 // function start_to_print_result(tscoreArray){
 function start_to_print_result(resultArray, tscoreArray){
+  damn = damn_for_gender(gender);   // 2026-09 修复：按受测者性别取正确的 Mf 下标
 
   // 打未修正的表
   let table = document.createElement("table");
@@ -1120,14 +1149,14 @@ function start_to_print_result(resultArray, tscoreArray){
 
   // 创建表头单元格
   let header3 = document.createElement("th");
-  header3.textContent = "各量表的一致性T分（-8修正）";
+  header3.textContent = "各量表的中国常模 T 分（原为 -8 修正）";
   header3.style.padding = "8px";
   header3.style.borderRight = "1px solid black";
   header3.style.color = "red"
   headerRow2.appendChild(header3);
 
   let header4 = document.createElement("th");
-  header4.textContent = "最基本的部分解释（-8修正）";
+  header4.textContent = "最基本的部分解释（文字仍源自美国常模解释体系）";
   header4.style.padding = "8px";
   // 20240823尝试引入对“修正分”的描述 
   header4.style.color = "red"
@@ -1137,70 +1166,76 @@ function start_to_print_result(resultArray, tscoreArray){
   // for (let i = 0; i < resultArray.length; i++) {
     // 14 === 3 + 9 + 2(Mf)
   for (let i = 0; i < 13; i++) {
-    // if(i === 12 || i === 7){
-    if(i === 7){
-      // 懒得打Mf的表了...
-      continue;
-    }
+    // 2026-09 重写：原逻辑为"当 T 分 >= 一级阈值时减 8，否则不动"。
+    // 该做法有三个问题：(a) 全局常数 -8 在各量表上误差达 ±12 分，且 K / Mf(男) / Ma(女)
+    // 方向是反的；(b) 有条件触发造成不连续且非单调 —— 原始分更高的人可能报出更低的 T 分；
+    // (c) 无上下界钳位。现改为按已出版的中国全国常模做位置+离散度双参数仿射换算，
+    // 依据见 origin_js/mmpi_cn_norms.js 的文件头。
+    const __key = CN_KEYS[i];
+    const __tUS = tscoreArray[damn[i]];
+    const __tCN = (typeof MMPI_CN !== "undefined") ? MMPI_CN.correctT(__key, gender, __tUS) : null;
+    const __cut = (typeof MMPI_CN !== "undefined") ? MMPI_CN.CUTOFF_CN : 60;
 
     let row = document.createElement("tr");
+    row.style.borderTop = "1px solid black";
     table2.appendChild(row);
 
     let cell1 = document.createElement("td");
-    // 注意！如果原分数“合理”，则不做出-8修正。真他妈麻烦。
-    let abnormal_flag;
-    if(tscoreArray[damn[i]] >= resultArray[i][1]){
-      abnormal_flag = true;
-    }else{
-      abnormal_flag = false;
-    }
-
-    if(abnormal_flag){
-      cell1.textContent = resultArray[i][0] + " : " + (tscoreArray[damn[i]] - 8);
-    }else{
-      cell1.textContent = resultArray[i][0] + " : " + (tscoreArray[damn[i]]);
-    }
     cell1.style.padding = "8px";
     cell1.style.borderRight = "1px solid black";
-    if(abnormal_flag){
-      cell1.style.color = "red";
-    }else{
-      // do nothing
+    cell1.style.verticalAlign = "top";
+
+    if (__tCN === null) {
+      // 两种情况必须分开说，否则会误导使用者：
+      //   (a) 美国常模 T 分本身算不出来 —— 原始分落在查表范围之外。
+      //       美国常模表有地板与天花板：如男性 Mf 的最低可查原始分是 16（T=30），
+      //       F 量表最高只查到原始分 28（T=120）。超出即无对应 T 分，这是原表的性质。
+      //   (b) 该量表确实没有已出版的中国常模统计量（约 110 个量表属于此类）。
+      const __noUS = (__tUS === undefined || __tUS === null || __tUS === "" || isNaN(Number(__tUS)));
+      const __hasCNNorm = (typeof MMPI_CN !== "undefined") && MMPI_CN.hasNorm(__key);
+      cell1.textContent = resultArray[i][0] + " : "
+        + (__noUS ? "超出量表范围" : "无中国常模数据");
+      cell1.style.color = "#888888";
+      row.appendChild(cell1);
+      let c2 = document.createElement("td");
+      c2.style.padding = "8px";
+      c2.style.verticalAlign = "top";
+      if (__noUS) {
+        c2.textContent = "本量表的原始分落在美国常模查表的范围之外（过高或过低），"
+          + "因此既无美国 T 分也无法换算中国 T 分。"
+          + (__hasCNNorm ? "（本量表本身是有中国常模数据的。）" : "")
+          + " 若您漏答较多，建议补全后重测。";
+      } else {
+        c2.textContent = "本量表尚无已出版的中国常模统计量，故不做换算。可参考左侧美国常模表，"
+          + "但请注意美国常模会系统性高估中国受测者的分数。";
+      }
+      row.appendChild(c2);
+      continue;
     }
+
+    const __elevated = __tCN >= __cut;
+    cell1.textContent = resultArray[i][0] + " : " + __tCN
+                      + "（美国常模 " + __tUS + "）";
+    if (__elevated) { cell1.style.color = "red"; }
     row.appendChild(cell1);
 
     let cell2 = document.createElement("td");
-
-    if(abnormal_flag){
-      if(tscoreArray[damn[i]] - 8 >= resultArray[i][1]){
-        cell2.textContent = resultArray[i][3];
-      }
-      else if(tscoreArray[damn[i]] - 8 >= resultArray[i][2]){
-        cell2.textContent = resultArray[i][4];
-      }
-      else if(tscoreArray[damn[i]] - 8 < resultArray[i][2]){
-        cell2.textContent = resultArray[i][5];
-      }
-      else{
-        cell2.textContent = "您的分数超出了量表范围。详情请见 github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）"
-      }
-    }else{
-      if(tscoreArray[damn[i]] >= resultArray[i][1]){
-        cell2.textContent = resultArray[i][3];
-      }
-      else if(tscoreArray[damn[i]] >= resultArray[i][2]){
-        cell2.textContent = resultArray[i][4];
-      }
-      else if(tscoreArray[damn[i]] < resultArray[i][2]){
-        cell2.textContent = resultArray[i][5];
-      }
-      else{
-        cell2.textContent = "您的分数超出了量表范围。详情请见 github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）"
-      }
-    }
-
-    // cell2.textContent = resultArray[i][1];
     cell2.style.padding = "8px";
+    cell2.style.verticalAlign = "top";
+    // 解释文本由【美国】T 分驱动，而不是中国 T 分 —— 这是刻意的。
+    // 这些文本的措辞里直接写着"T分高于65""若65<=T<=79"等等，档位是按美国常模写的。
+    // 若改用中国 T 分驱动，就会出现"中国T=59"配上"低于平均值"这类自相矛盾的句子。
+    // 因此：数值用中国常模（判断是否达到 60 分界点），描述性文字沿用美国常模的解释体系，
+    // 并在表下明确标注其来源。补齐这一层需要《MMPI-2中文简体字版使用手册》第七章的
+    // 中文编码型解析，已列入待办，见 docs/探索纪要.md。
+    let __txt;
+    if (__tUS >= resultArray[i][1])      { __txt = resultArray[i][3]; }
+    else if (__tUS >= resultArray[i][2]) { __txt = resultArray[i][4]; }
+    else                                 { __txt = resultArray[i][5]; }
+    cell2.textContent = (__txt === undefined || __txt === "") ? "" : __txt;
+    if (__elevated) {
+      cell2.textContent = "【已达到中国常模 " + __cut + " 分界点】" + cell2.textContent;
+    }
     row.appendChild(cell2);
   }
 
@@ -1209,10 +1244,41 @@ function start_to_print_result(resultArray, tscoreArray){
   var span = document.createElement('span');
   var span2 = document.createElement('span2');
   var span3 = document.createElement('span3')
-  var text = document.createTextNode('由于我们使用的是美国常模，因此最终算出的T分可能偏高。根据经验，我们对T分进行了-8的修正。'); 
+  var text = document.createTextNode('第二张表的 T 分已按中国常模换算。依据是 Cheung, Song & Zhang (1996) 表6-3 公布的中国全国常模样本（男1106/女1108，覆盖七大行政区，对标全国人口统计）在美国常模尺度上的均值与标准差，做位置与离散度两参数校正。中国 MMPI-2 的区分点是 60 T 分（美国为 65），见《MMPI-2中文简体字版使用手册》第二章第七节。');
   var text2 = document.createTextNode('注意！结果仅供参考！');
-  var text3 = document.createTextNode('详情请见 https://github.com/MMPI-CHN/MMPI-CHN.github.io/blob/main/%E5%85%B3%E4%BA%8E%E5%B8%B8%E6%A8%A1%E7%9A%84%E9%80%9A%E4%BF%97%E8%A7%A3%E9%87%8A.txt')
+  var text3 = document.createTextNode('常模换算的依据、验证过程与已知局限：https://github.com/MMPI-CHN/MMPI-CHN.github.io/blob/main/docs/%E6%8E%A2%E7%B4%A2%E7%BA%AA%E8%A6%81-TLDR.md');
   span.appendChild(text);
+
+  // 2026-09 新增：给出每个量表"美国 T 分需达到多少，才相当于中国 60 分界点"。
+  // 这个对照表比任何文字解释都直观地说明了两套常模的差距。
+  if (typeof MMPI_CN !== "undefined") {
+    var cutTbl = document.createElement("table");
+    cutTbl.style.borderCollapse = "collapse";
+    cutTbl.style.margin = "16px auto";
+    cutTbl.setAttribute("border", "1");
+    cutTbl.setAttribute("bgcolor", "#B0C4DE");
+    var cutCap = document.createElement("caption");
+    cutCap.textContent = "美国常模 T 分需达到下列数值，才相当于中国常模的 60 分界点";
+    cutCap.style.padding = "6px";
+    cutTbl.appendChild(cutCap);
+    var hr = document.createElement("tr");
+    ["量表", "美国T分"].forEach(function (h) {
+      var th = document.createElement("th"); th.textContent = h;
+      th.style.padding = "4px 12px"; hr.appendChild(th);
+    });
+    cutTbl.appendChild(hr);
+    CN_KEYS.forEach(function (k) {
+      var v = MMPI_CN.usTForCN(k, gender);
+      if (v === null) { return; }
+      var tr = document.createElement("tr");
+      [k, v.toFixed(1)].forEach(function (c) {
+        var td = document.createElement("td"); td.textContent = c;
+        td.style.padding = "3px 12px"; tr.appendChild(td);
+      });
+      cutTbl.appendChild(tr);
+    });
+    window.__cn_cutoff_table = cutTbl;   // 延后插入，见下方 table2 之后
+  }
   span2.appendChild(text2);
   span3.appendChild(text3);
   
@@ -1267,6 +1333,13 @@ function start_to_print_result(resultArray, tscoreArray){
   document.body.appendChild(document.createElement('br'));
 
   document.body.appendChild(table2);
+
+  // 2026-09：分界点对照表紧随中国常模表之后
+  if (typeof window !== "undefined" && window.__cn_cutoff_table) {
+    document.body.appendChild(document.createElement('br'));
+    document.body.appendChild(window.__cn_cutoff_table);
+    window.__cn_cutoff_table = null;
+  }
 
   // 插入三个空白行
   document.body.appendChild(document.createElement('br'));
