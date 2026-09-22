@@ -63,13 +63,13 @@ In J. N. Butcher (Ed.), *International Adaptations of the MMPI-2* (pp. 137-161)*
 | 修复 | 影响 |
 |---|---|
 | 9 处查表数值勘误 | 最严重两处：Sc 男某分段**偏低 37 个 T 分**、Mt 男两格**偏低 60 个 T 分**（把高分读成地板分） |
-| Mf 性别下标写死 | 修复前**每个男性受测者的 Mf 都显示"超出量表范围"** |
+| Mf 性别下标写死为女性条目 | 潜伏缺陷。两张结果表原本都有 `if(i===7) continue` 跳过 Mf，两张剖析图又各自用对了下标，所以**改动前对用户无可见影响**。现已修正下标，并让 Mf 进入中国常模表 |
 | 长短卷开关失效 | `longform` 变量从未被更新，选"短卷"会产生 **197 个未答项**，整张剖析图作废 |
 | −8 全局修正 → 逐量表换算 | −8 在各量表上误差达 ±12 分，且 K / Mf(男) / Ma(女) **方向是反的** |
 | 修正的有条件触发 | 原逻辑造成不连续：**原始分更高的人可能报出更低的 T 分** |
 | T 分未钳位 | 现钳位于 [30, 120] |
 
-旧版本完整保留在 **[`legacy/`](legacy/)**，线上可直接访问 <https://mmpi-chn.github.io/legacy/>，
+旧版本完整保留在 **[`__legacy/`](__legacy/)**，线上可直接访问 <https://mmpi-chn.github.io/__legacy/>，
 一个字节都没改。git tag `v1-legacy` 标记了改动前的完整状态。
 
 ---
@@ -77,7 +77,8 @@ In J. N. Butcher (Ed.), *International Adaptations of the MMPI-2* (pp. 137-161)*
 ## 开发
 
 ```bash
-node test/run-node.js      # 计分层回归测试（38 项）
+node test/run-node.js      # 形式回归测试（38 项）—— 代码有没有按设计跑
+node test/accuracy.js      # 数值准确性检验（13 项）—— 算出来的数对不对
 node test/snapshot.js 0 F  # 导出结果页渲染快照（性别 0男/1女，作答 T/F）
 ```
 

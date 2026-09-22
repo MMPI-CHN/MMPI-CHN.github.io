@@ -2,8 +2,8 @@
 User-agent: *
 Allow: /
 
-# legacy/ 是 2026-09 重构前的完整旧版本留档，内容与主站高度重复。
+# __legacy/ 是 2026-09 重构前的完整旧版本留档，内容与主站高度重复。
 # 屏蔽以避免被判定为重复内容而稀释主站排名；旧版本本身仍可直接访问。
-Disallow: /legacy/
+Disallow: /__legacy/
 
 Sitemap: https://mmpi-chn.github.io/sitemap.txt
