@@ -22,6 +22,19 @@ frame.onload = function () {
     const chartScript = [...d.scripts].find(script => /Chart-2\.9\.4\.min\.js$/.test(script.getAttribute('src') || ''));
     check(chartScript && chartScript.getAttribute('src') === './copy_files/Chart-2.9.4.min.js', 'Chart.js 使用仓库内本地文件');
     check(d.querySelectorAll('input[type=radio][name^=Q]').length === 1134, '567题渲染完整');
+    const instruction = d.querySelector('.answer-instruction');
+    check(instruction && instruction.textContent.includes('按整句话判断'), '作答说明明确否定句也按整句判断');
+    const firstOptions = [...d.querySelectorAll('.answer-option')].slice(0, 2);
+    const submitButton = d.querySelector('input.my_button[value="提交测试"]');
+    check(firstOptions.length === 2 && firstOptions.map(el => el.textContent.trim()).join('/') === '符合/不符合' &&
+      firstOptions.every(el => el.getBoundingClientRect().height >= 35 && el.getBoundingClientRect().width >= 58 &&
+        getComputedStyle(el.querySelector('.answer-option__surface')).fontSize === getComputedStyle(submitButton).fontSize), '题目选项约58×35且字号与提交测试一致');
+    const firstSurface = firstOptions[0].querySelector('.answer-option__surface');
+    const firstInput = firstOptions[0].querySelector('input');
+    firstSurface.style.transition = 'none';
+    firstOptions[0].click();
+    check(firstInput.checked && getComputedStyle(firstSurface).backgroundColor === 'rgb(176, 196, 222)', '点击选项块任意位置即可选中并显示灰蓝实底');
+    firstInput.checked = false;
     w.score_rb(d.forms.questions);
     check(!text().includes('答卷检查：'), '空答不显示检查框');
     check(d.querySelector('#score-results table'), '空答仍显示分数表');

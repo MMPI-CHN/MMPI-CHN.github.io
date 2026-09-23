@@ -534,15 +534,16 @@ function append_text(txt) {
     document.write(text + "<br>", text_zh + "<br>");
 
     /* 下面这行是原版。现在为了debug，加一个checked标签使该选项默认选中 */ 
-    document.write("<input type=\"radio\" id=" + name + " name=\"" + name + "\"value=\"T\" required=\"required\" ><label for=" + name +">是</label>");
+    document.write("<span class=\"answer-options\">");
+    document.write("<label class=\"answer-option\"><input type=\"radio\" id=\"" + name + "\" name=\"" + name + "\" value=\"T\" required=\"required\"><span class=\"answer-option__surface\">符合</span></label>");
 
     /* For debugging... */
     // document.write("<input type=\"radio\" id=" + name + " name=\"" + name + "\" value=\"T\" required=\"required\" checked=\"checked\"><label for=" + name + ">是</label>");
 
     // document.write("<input type=\"radio\" name=" + name + " value=\"T\" >是");
     // document.write("<input type=\"radio\" name=" + name + " value=\"F\">否");
-    document.write("<input type=\"radio\" id=Not_" + name + " name=\"" + name + "\"value=\"F\" required=\"required\" ><label for=Not_" + name +">否</label>");
-    document.write("<br><br><br>");
+    document.write("<label class=\"answer-option\"><input type=\"radio\" id=\"Not_" + name + "\" name=\"" + name + "\" value=\"F\" required=\"required\"><span class=\"answer-option__surface\">不符合</span></label>");
+    document.write("</span><br><br>");
   }
 
 
