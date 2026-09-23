@@ -122,5 +122,5 @@ Kevin Timmerman (2008, GPLv3)  →  AstralLing/MMPI2  →  本项目
 
 ---
 
-*2026 年 9 月的计分层修复、中国常模换算与本仓库文档，由项目作者与
-Anthropic Claude Opus 5（`claude-opus-5`，1M 上下文）讨论后共同完成。*
+*2026 年 9 月的计分层修复、中国常模换算与本仓库文档，由项目作者、
+Anthropic Claude Opus 5（`claude-opus-5`，1M 上下文）与 OpenAI Codex（GPT-6）共同完成。*
