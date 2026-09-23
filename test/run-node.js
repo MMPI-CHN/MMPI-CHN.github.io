@@ -38,7 +38,7 @@ function makeDom() {
       setAttribute(k, v) { this.attrs[k] = v; },
       getAttribute(k) { return this.attrs[k]; },
       getContext() { return {}; },
-      addEventListener() {}, removeChild() {}, click() {},
+      addEventListener() {}, removeChild(c) { this.children = this.children.filter(x => x !== c); }, click() {},
       get parentNode() { return body; },
       get nextSibling() { return null; }
     };
@@ -296,7 +296,7 @@ test('scales[10] 有男表、scales[11] 有女表（另一性别为空数组）'
   eq(S[11][3].length, 0, 'scales[11][3] 应为空');
   ok(S[11][4].length > 3, 'scales[11][4] 应为女性 Mf 表');
 });
-test('男性 Mf 在常见分数段能查到有效 T 分（修复前取错表，恒为 undefined）', () => {
+test('男性 Mf 在常见分数段能查到有效 T 分（错误下标潜伏于原来跳过的分支）', () => {
   // 中国男性 Mf 原始分均值为 24.4（表6-3），取整后必须能查到 T 分
   ok(S[10][3][24 + 1] !== undefined, 'scales[10][3] 在 raw24 处应有 T 分');
   const v = tableLookup('Mf', 0, 24);
@@ -427,7 +427,7 @@ test('区分点常量：中国 60 / 美国 65', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-console.log('\n【9】渲染路径：中国常模表与分界点对照表必须真的出现在页面上');
+console.log('\n【9】渲染路径：只保留一张基础解释表，按显示的近似中国 T 分选档');
 // ═══════════════════════════════════════════════════════════════════════════
 function walk(el, out) {
   out = out || [];
@@ -448,47 +448,127 @@ function renderOnce(gender, ansChar) {
   a.score();
   return a;
 }
-function findTable(a, needle) {
-  return walk(a.__body).filter(e => e.tagName === 'table')
-                       .find(t => allText(t).indexOf(needle) >= 0);
+function findTable(a, needle, latest = false) {
+  const tables = walk(a.__body).filter(e => e.tagName === 'table');
+  if (latest) tables.reverse();
+  return tables.find(t => {
+    const head = t.children.find(c => c.tagName === 'thead' || c.tagName === 'tr');
+    return head && allText(head).includes(needle);
+  });
+}
+function basicRow(table, key) {
+  return table.children.find(r => r.tagName === 'tr' && r.children[0] &&
+    r.children[0].textContent.startsWith(key + '（'));
 }
 
-test('页面上出现"各量表的中国常模 T 分"表头，且无残留的旧 -8 说明', () => {
+test('页面只有一张基础解释表；完整大表仍明示美国常模来源，两图标为中国近似 T 分', () => {
   const a = renderOnce(0, 'F');
   const txt = allText(a.__body);
-  ok(txt.indexOf('各量表的中国常模 T 分') >= 0, '未找到中国常模表表头');
+  ok(txt.includes('中国常模近似 T 分') && txt.includes('基础解释'), '缺少简明表头');
+  ok(!txt.includes('美国常模 T 分（原始查表）'), '仍显示重复的美国13项解释表');
+  ok(!txt.includes('按本近似公式换算为60分'), '仍显示技术对照表');
+  ok(!txt.includes('以下解释按美国常模T分分档'), '仍显示过时的解释前缀');
+  ok(txt.includes('T Score (美国常模)'), '原始大表没有标明T分来源');
+  eq(walk(a.__body).filter(e => e.tagName === 'table').length, 3, '应只有原始大表、关键题表与近似中国基础表');
+  a.charts.forEach(c => {
+    ok(c.options.title.text.includes('中国常模近似 T 分'), '图标题未标近似中国 T 分');
+    ok(c.data.datasets.every(d => d.label.includes('中国常模近似 T 分')), '图例未标近似中国 T 分');
+  });
   ok(txt.indexOf('我们对T分进行了-8的修正') < 0, '仍残留旧的 -8 说明文字');
 });
 
 test('中国常模表含表头 + 13 个量表行（Mf 不再被跳过）', () => {
   const a = renderOnce(0, 'F');
-  const t = findTable(a, '各量表的中国常模 T 分');
+  const t = findTable(a, '中国常模近似 T 分');
   ok(t !== undefined, '找不到中国常模表');
   eq(t.children.filter(r => r.tagName === 'tr').length, 14);
+});
+
+test('Mf 男女只显示对应计分条目，原始表与近似中国表数值一致', () => {
+  for (const [gender, sex, us, cn] of [[0, '男性', 60, 66], [1, '女性', 57, 42]]) {
+    const a = renderOnce(gender, 'F');
+    const raw = findTable(a, 'Scale Description');
+    const rawRows = walk(raw).filter(x => x.tagName === 'tr' && x.children.length && allText(x.children[0]).trim() === 'Mf');
+    eq(rawRows.length, 1, `${sex}原始量表表只能有一个Mf`);
+    ok(allText(rawRows[0]).includes(sex === '男性' ? 'Male' : 'Female'), `${sex}原始Mf条目选错`);
+    ok(!allText(rawRows[0]).includes(sex === '男性' ? 'Female' : 'Male'), `${sex}原始表混入另一性别`);
+    const cnTable = findTable(a, '中国常模近似 T 分');
+    const mfRows = table => table.children.filter(x => x.tagName === 'tr' && x.children.length && allText(x.children[0]).includes('Mf（'));
+    eq(mfRows(cnTable).length, 1, `${sex}换算表只能有一个Mf`);
+    ok(allText(mfRows(cnTable)[0].children[0]).includes(`按${sex}计分） : ${cn}`), `${sex}换算Mf分数错`);
+    ok(allText(rawRows[0]).includes(String(us)), `${sex}美国Mf原始表T分错`);
+  }
 });
 
 test('每个量表行都给出数值或明确说明，不出现 undefined / NaN（男女 × 全是/全否）', () => {
   for (const g of [0, 1]) for (const ch of ['T', 'F']) {
     const a = renderOnce(g, ch);
-    const t = findTable(a, '各量表的中国常模 T 分');
+    const t = findTable(a, '中国常模近似 T 分');
     t.children.filter(r => r.tagName === 'tr').slice(1).forEach(r => {
       const c1 = allText(r.children[0]);
       ok(c1.indexOf('undefined') < 0, `${g ? '女' : '男'}/全${ch} 出现 undefined: "${c1}"`);
       ok(c1.indexOf('NaN') < 0, `${g ? '女' : '男'}/全${ch} 出现 NaN: "${c1}"`);
-      const good = /（美国常模/.test(c1) || /超出量表范围/.test(c1) || /无中国常模数据/.test(c1);
+      const good = / : \d+$/.test(c1.trim()) || /超出量表范围/.test(c1) || /无中国常模数据/.test(c1);
       ok(good, `${g ? '女' : '男'}/全${ch} 行内容异常: "${c1}"`);
     });
   }
 });
 
-test('分界点对照表渲染出 13 个量表，且 F男=78.7 / Sc男=74.8', () => {
-  const a = renderOnce(0, 'F');
-  const t = findTable(a, '才相当于中国常模的 60 分界点');
-  ok(t !== undefined, '找不到分界点对照表');
-  eq(t.children.filter(r => r.tagName === 'tr').length, 14);
-  const txt = allText(t);
-  ok(txt.indexOf('78.7') >= 0, 'F男 应为 78.7');
-  ok(txt.indexOf('74.8') >= 0, 'Sc男 应为 74.8');
+function renderBasicAt(a, key, chineseT) {
+  const scores = [];
+  a.CN_KEYS.forEach((k, i) => {
+    scores[a.damn_for_gender(a.gender)[i]] = a.MMPI_CN.usTForCN(k, a.gender, k === key ? chineseT : 50);
+  });
+  a.start_to_print_result(a.resultArray, scores);
+  const table = findTable(a, '中国常模近似 T 分', true);
+  return basicRow(table, key);
+}
+function withoutReferencePrefix(s) {
+  return s.replace(/^【近似换算值达到 60 分参考线，不等于诊断】/, '');
+}
+
+test('12个非Mf基础量表沿用作者原两阈值、三档与解释全文', () => {
+  const a = loadApp();
+  a.gender = 0;
+  a.CN_KEYS.forEach((key, i) => {
+    if (key === 'Mf') return;
+    const source = a.resultArray[i];
+    const [high, middle] = [source[1], source[2]];
+    for (const [t, selected] of [[middle - 1, 5], [middle, 4], [high - 1, 4], [high, 3]]) {
+      const row = renderBasicAt(a, key, t);
+      ok(row, `${key}=${t} 缺少结果行`);
+      ok(row.children[0].textContent.endsWith(`: ${t}`), `${key}=${t} 显示分数错误`);
+      eq(withoutReferencePrefix(row.children[1].textContent), source[selected], `${key}=${t} 原解释全文或档位被改动`);
+    }
+  });
+});
+
+test('随机PDF的 D 美国T=68 换算显示55，沿用原第三档解释全文', () => {
+  const a = loadApp();
+  a.gender = 0;
+  const scores = [];
+  scores[a.damn_for_gender(0)[4]] = 68;
+  a.start_to_print_result(a.resultArray, scores);
+  const t = findTable(a, '中国常模近似 T 分');
+  const d = basicRow(t, 'D');
+  ok(d !== undefined, '缺少D量表行');
+  ok(d.children[0].textContent.endsWith(': 55'), 'D换算结果应显示55');
+  eq(withoutReferencePrefix(d.children[1].textContent), a.resultArray[4][5], 'D=55 应采用作者原第三档文字');
+});
+
+test('档位采用页面显示的取整值：Pa 79.6→80选原高档，D 59.6→60选原中档', () => {
+  const a = loadApp();
+  a.gender = 0;
+  const scores = [];
+  scores[a.damn_for_gender(0)[8]] = a.MMPI_CN.usTForCN('Pa', 0, 79.6);
+  scores[a.damn_for_gender(0)[4]] = a.MMPI_CN.usTForCN('D', 0, 59.6);
+  a.start_to_print_result(a.resultArray, scores);
+  const pa = basicRow(findTable(a, '中国常模近似 T 分'), 'Pa');
+  const d = basicRow(findTable(a, '中国常模近似 T 分'), 'D');
+  ok(pa.children[0].textContent.endsWith(': 80'), 'Pa应显示取整后的80');
+  eq(withoutReferencePrefix(pa.children[1].textContent), a.resultArray[8][3], 'Pa应按显示的80选作者原高档');
+  ok(d.children[0].textContent.endsWith(': 60'), 'D应显示取整后的60');
+  eq(withoutReferencePrefix(d.children[1].textContent), a.resultArray[4][4], 'D应按显示的60选作者原中档');
 });
 
 test('长卷绘制 2 张剖析图；短卷只绘 1 张并给出说明', () => {
@@ -504,17 +584,147 @@ test('长卷绘制 2 张剖析图；短卷只绘 1 张并给出说明', () => {
   ok(allText(a.__body).indexOf('内容量表依赖第 371 题以后的项目') >= 0, '缺少短卷说明');
 });
 
-test('剖析图数据中不含 undefined / NaN（男女各一遍）', () => {
-  for (const g of [0, 1]) {
-    const a = renderOnce(g, 'F');
-    a.charts.forEach((cfg, ci) => {
-      ((cfg && cfg.data && cfg.data.datasets) || []).forEach(d => {
-        (d.data || []).forEach((v, vi) => {
-          ok(v !== undefined, `${g ? '女' : '男'} 图${ci} 第${vi}项为 undefined`);
-          ok(!(typeof v === 'number' && isNaN(v)), `${g ? '女' : '男'} 图${ci} 第${vi}项为 NaN`);
-        });
+test('两张图每个点等于对应量表的近似中国 T 分，超表范围留空而非画成 0', () => {
+  const groups = [
+    ['L', 'F', 'K', 'Hs', 'D', 'Hy', 'Pd', 'Mf', 'Pa', 'Pt', 'Sc', 'Ma', 'Si'],
+    ['ANX', 'FRS', 'OBS', 'DEP', 'HEA', 'BIZ', 'ANG', 'CYN', 'ASP', 'TPA', 'LSE', 'SOD', 'FAM', 'WRK', 'TRT']
+  ];
+  let gaps = 0;
+  for (const g of [0, 1]) for (const answer of ['T', 'F']) {
+    const a = renderOnce(g, answer);
+    const raw = findTable(a, 'Scale Description');
+    ok(raw, '缺少原始美国 T 分表');
+    groups.forEach((keys, ci) => {
+      const cfg = a.charts[ci];
+      ok(cfg, `${g ? '女' : '男'}/全${answer} 缺少图${ci}`);
+      const values = cfg.data.datasets[0].data;
+      eq(values.length, keys.length, `图${ci} 点数`);
+      keys.forEach((key, vi) => {
+        eq(cfg.data.labels[vi], key, `图${ci} 第${vi}项量表错位`);
+        const rows = walk(raw).filter(r => r.tagName === 'tr' && r.children.length > 4 &&
+          allText(r.children[0]).trim() === key);
+        eq(rows.length, 1, `${key} 应只有所选性别的一条原始分行`);
+        const tUS = Number(allText(rows[0].children[4]).trim());
+        const expected = Number.isFinite(tUS) ? a.MMPI_CN.correctT(key, g, tUS) : null;
+        eq(values[vi], expected, `${g ? '女' : '男'}/全${answer} ${key} 图点与中国换算表不一致`);
+        if (expected === null) gaps++;
       });
     });
+  }
+  ok(gaps > 0, '极端答卷应包含超出查表范围的空白图点');
+});
+
+test('诊断说明、警告和诊断表在原始技术表之前，原始选项在最后且限宽', () => {
+  const a = renderOnce(0, 'F');
+  const nodes = walk(a.__body);
+  const index = predicate => nodes.findIndex(predicate);
+  const note = index(e => e.tagName === 'span' && allText(e).includes('中国常模近似T分表按'));
+  const warning = index(e => e.tagName === 'span2' && allText(e).includes('注意！结果仅供参考！'));
+  const link = index(e => e.tagName === 'a' && allText(e).includes('查看常模换算'));
+  const diagnostic = nodes.indexOf(findTable(a, '中国常模近似 T 分'));
+  const raw = nodes.indexOf(findTable(a, 'Scale Description'));
+  const choices = index(e => e.tagName === 'span4' && allText(e).includes('如果有需要，可以保留您的原始选项'));
+  ok(note >= 0 && warning >= 0 && link >= 0 && diagnostic >= 0 && raw >= 0 && choices >= 0,
+    `结果区块缺少元素：说明=${note} 警告=${warning} 链接=${link} 诊断表=${diagnostic} 原始表=${raw} 选项=${choices}`);
+  ok(note < warning && warning < link && link < diagnostic && diagnostic < raw && raw < choices,
+    '诊断区块、技术表、原始选项顺序错误');
+  ok(nodes[choices].style.maxWidth, '原始选项未设置最大宽度');
+});
+
+// 2026-09-22 PDF复核暴露的边界与解释路径。
+test('空答卷不显示检查框，仍显示分数、图表和基础解释', () => {
+  for (const lf of [true, false]) {
+    const a = loadApp(); a.longform = lf; a.ans = [undefined];
+    a.score();
+    eq(a.charts.length, lf ? 2 : 1);
+    const text = allText(a.__body);
+    ok(!text.includes('答卷检查：'));
+    ok(findTable(a, '中国常模近似 T 分') !== undefined);
+  }
+});
+test('已有报告后再空答：替换旧报告，仍显示本次分数和图表', () => {
+  const a = renderOnce(0, 'F');
+  eq(a.profileCharts.length, 2);
+  const oldReport = a.__body.children.find(x => x.attrs.id === 'score-results');
+  a.ans = [undefined]; a.score();
+  eq(a.profileCharts.length, 2);
+  const reports = a.__body.children.filter(x => x.attrs.id === 'score-results');
+  eq(reports.length, 1);
+  ok(reports[0] !== oldReport);
+  ok(!allText(a.__body).includes('答卷检查：'));
+  ok(findTable(a, '中国常模近似 T 分') !== undefined);
+});
+test('固定种子随机作答：不显示检查框，仍显示一张基础解释表', () => {
+  const a = loadApp(); let seed = 20260922;
+  a.ans = [undefined];
+  for (let i = 1; i <= 567; i++) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    a.ans.push(seed < 2147483648 ? 'T' : 'F');
+  }
+  a.score();
+  eq(a.charts.length, 2);
+  const text = allText(a.__body);
+  ok(!text.includes('答卷检查：'));
+  const cnTable = findTable(a, '中国常模近似 T 分');
+  ok(cnTable);
+  ok(allText(cnTable).includes('基础解释'));
+  ok(!allText(cnTable).includes('以下解释按美国常模T分分档'));
+});
+test('未完成题对不得伪装成完整的VRIN/TRIN分数', () => {
+  const a = loadApp();
+  a.ans = [undefined, ...Array(537).fill('F'), ...Array(30).fill('?')];
+  a.score();
+  const raw = findTable(a, 'Scale Description');
+  const rows = walk(raw).filter(x => x.tagName === 'tr' && x.children.length && ['VRIN','TRIN'].includes(allText(x.children[0]).trim()));
+  ok(rows.some(r => allText(r).includes('未完整作答')));
+});
+test('短卷忽略文本导入的后197题，不报告内容量表部分T分', () => {
+  const a = loadApp(); a.longform = false;
+  a.ans = [undefined, ...Array(370).fill('F'), ...Array(197).fill('T')];
+  a.score();
+  eq(a.ans.length, 371);
+  const raw = findTable(a, 'Scale Description');
+  const rinRows = walk(raw).filter(x => x.tagName === 'tr' && x.children.length && ['VRIN','TRIN'].includes(allText(x.children[0]).trim()));
+  eq(rinRows.length, 2);
+  ok(rinRows.every(r => allText(r).includes('未完整作答')));
+  const rows = walk(a.__body).filter(x => x.tagName === 'tr');
+  const anx = rows.find(x => allText(x.children[0]).trim() === 'ANX');
+  ok(allText(anx).includes('短卷不适用'));
+  eq(a.charts.length, 1);
+});
+test('随机填答按题抽样，每题恰选一个答案，第二次调用也覆盖旧答案', () => {
+  const a = loadApp();
+  const elements = [];
+  for (let i = 1; i <= 20; i++) for (const value of ['T','F'])
+    elements.push({type:'radio',name:'Q'+i,value,checked:false});
+  const sex = {type:'radio',name:'gender',value:'M',checked:true}; elements.push(sex);
+  a.__byId.select_all = { elements };
+  let calls = 0;
+  a.Math = Object.create(Math); a.Math.random = () => (++calls % 2 ? 0.8 : 0.2);
+  for (let run = 0; run < 2; run++) {
+    a.clickRandomToTOrF('select_all');
+    for (let i = 0; i < 40; i += 2) eq(elements[i].checked + elements[i+1].checked, 1);
+    eq(elements.slice(0,40).filter(x => x.checked && x.value === 'T').length, 10);
+    eq(sex.checked, true);
+  }
+  eq(calls, 40);
+});
+test('拒绝无穷值和布尔值，不将四舍五入后的60误判为达到参考线', () => {
+  for (const value of [Infinity,-Infinity,true,false,' ']) eq(CN.correctT('D',0,value),null);
+  const us = CN.usTForCN('D',0,59.6);
+  eq(CN.correctT('D',0,us),60);
+  eq(CN.isElevatedCN('D',0,us),false);
+});
+test('随机PDF的13个基础量表：从记录的原始分独立核对K校正、美国T和近似T', () => {
+  // 手工读取测试2.pdf第2、8、9页。没有把这当作逐题计分键的外部验证。
+  const rows = {L:[11,83,68],F:[29,undefined,null],K:[21,62,63],Hs:[14,79,69],
+    D:[27,68,55],Hy:[37,89,78],Pd:[29,84,81],Mf:[32,62,68],Pa:[16,72,62],
+    Pt:[18,77,67],Sc:[37,105,85],Ma:[22,65,62],Si:[35,61,54]};
+  for (const [key,[raw,us,cn]] of Object.entries(rows)) {
+    const table = S[CN.scaleIndex(key,0)][3];
+    const correctedRaw = Math.floor(raw + (table[0] || 0) * 21 + 0.5);
+    eq(table[correctedRaw+1],us,key+' US');
+    eq(CN.correctT(key,0,us),cn,key+' CN');
   }
 });
 

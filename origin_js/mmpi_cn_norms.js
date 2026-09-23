@@ -6,7 +6,7 @@
  * 于 2026 年 9 月讨论后共同完成。推导过程与证据见 docs/探索纪要.md。
  *
  * ---------------------------------------------------------------------------
- * 数据来源（唯一权威来源，非估计值）
+ * 数据来源（已出版的样本统计量；最终换算为近似值）
  * ---------------------------------------------------------------------------
  * Cheung, F. M., Song, W. Z., & Zhang, J. X. (1996).
  *   The Chinese MMPI-2: Research and applications in Hong Kong and the
@@ -18,7 +18,7 @@
  * 该表标题为 "MMPI-2 Raw Scores and K-Corrected T Scores (Based on U.S. Norms)
  * for PRC Normal Adults"，给出 31 个量表 × 男女 的：
  *   ① 中国原始分均值与标准差
- *   ② 该"中国平均人"按【美国常模】计算所得的 K 校正 T 分均值与标准差
+ *   ② 中国样本各人的美国常模K校正T分的均值与标准差，非“均值受测者”的T分
  *
  * 样本（书页 142 正文）：经 ICH + VRIN + TRIN 筛除后的全国常模样本，
  * 男 1106 / 女 1108，覆盖全国七大行政区，按地理分布、婚姻、教育、年龄
@@ -32,11 +32,11 @@
  * ---------------------------------------------------------------------------
  * 若把中国常模样本放在【美国】T 分尺子上量，其均值是 M_T、标准差是 S_T
  * （二者均为表 6-3 原值）。而中国常模自身的定义要求均值 50、标准差 10。
- * 因此做一次仿射变换即可：
+ * 本项目据此做一次仿射近似（并非官方中国一致性T分变换）：
  *
  *     T_中国 = 50 + (T_美国 − M_T) × 10 / S_T
  *
- * 位置与离散度两个参数全部来自已出版数据，本模块不含任何估计量。
+ * 两参数直接取自已出版的样本统计量。它们不能确定中国分布形状或个人分数误差。
  *
  * 内部一致性检验（详见 docs/探索纪要.md）：对 L/F/K/Mf/Si 五个线性 T 分量表
  * （其美国标准差可从查表精确反解），"10 × 中国原始分SD / 美国原始分SD" 应当
@@ -49,12 +49,12 @@
  * 已知局限
  * ---------------------------------------------------------------------------
  * 1. 中国常模的【完整原始分频数分布】未公开。本模块校正了分布的位置与
- *    离散度，形状沿用一致性 T 分的统一目标曲线。残余误差未能量化。
+ *    离散度，仍沿用美国计分变换。中国分布形状和残余误差未获验证。
  * 2. 常模采样于 1990 年代（对标 1990 年第四次全国人口普查）。本模块校正的是
  *    "1990 年代的中美差异"，不校正此后中国人群内部的变化。
  * 3. 本项目的中文译文与正版中文简体字版不同，而表 6-3 的常模是用正版译文
  *    建立的。因此结果不等同于正版 MMPI-2。
- * 4. 仅 31 个量表有中国常模数据。其余约 110 个量表（Harris-Lingoes 子量表、
+ * 4. 本模块采用表中29个量表的数据（不对VRIN/TRIN做此换算）。其余量表（Harris-Lingoes 子量表、
  *    RC 量表、PSY-5、多数附加量表）无中国常模，correctT 返回 null。
  *
  * ---------------------------------------------------------------------------
@@ -122,8 +122,8 @@
 
   var CUTOFF_CN = 60;   // 中国 MMPI-2 区分点
   var CUTOFF_US = 65;   // 美国 MMPI-2 区分点
-  var T_FLOOR   = 30;   // MMPI-2 合法 T 分下界
-  var T_CEIL    = 120;  // MMPI-2 合法 T 分上界
+  var T_FLOOR   = 30;   // 本项目近似换算的显示下限
+  var T_CEIL    = 120;  // 本项目近似换算的显示上限
 
   function params(scale, gender) {
     var n = NORM[scale];
@@ -144,7 +144,7 @@
     opts = opts || {};
     var p = params(scale, gender);
     if (!p) return null;
-    if (tUS === undefined || tUS === null || tUS === '' || isNaN(Number(tUS))) return null;
+    if (typeof tUS !== 'number' || !isFinite(tUS)) return null;
     var v = 50 + (Number(tUS) - p.MT) * 10 / p.ST;
     if (opts.clamp !== false) v = Math.max(T_FLOOR, Math.min(T_CEIL, v));
     return opts.round === false ? v : Math.round(v);
@@ -164,7 +164,7 @@
 
   /** 该量表在【中国常模】下是否达到 60 分界点 */
   function isElevatedCN(scale, gender, tUS) {
-    var t = correctT(scale, gender, tUS);
+    var t = correctT(scale, gender, tUS, { round: false });
     return t === null ? null : t >= CUTOFF_CN;
   }
 

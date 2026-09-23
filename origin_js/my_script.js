@@ -1,6 +1,6 @@
 // Append text to the DOM
 function append_text(txt) {
-    let docbody = document.getElementsByTagName("body")[0];
+    let docbody = resultTarget();
     // docbody.appendChild(document.createTextNode(txt));
     /*meow meow 20230307*/
     let newP = document.createElement("p");
@@ -36,7 +36,7 @@ function append_text(txt) {
   function make_table() {
     let docbody, table, thead, tbody, trow, i;
   
-    docbody = document.getElementsByTagName("body")[0];
+    docbody = technicalTableTarget || resultTarget();
     table = document.createElement("table");
     table.setAttribute("border", "3");
     
@@ -63,6 +63,29 @@ function append_text(txt) {
   longform = true;	// All questions or first 370
   gender = 0;		// 0==male, 1==female
   ans = []; 		// Answers to questions: [T,F,?]
+  var resultContainer = null;
+  var profileCharts = [];
+  var technicalTableTarget = null;
+  function resultTarget() { return resultContainer || document.body; }
+  function resetResults() {
+    profileCharts.forEach(function (chart) { chart.destroy(); });
+    profileCharts = [];
+    technicalTableTarget = null;
+    if (resultContainer) resultContainer.parentNode.removeChild(resultContainer);
+    resultContainer = document.createElement('section');
+    resultContainer.setAttribute('id', 'score-results');
+    document.body.appendChild(resultContainer);
+  }
+
+  // 只有全部题对都在当前卷内且完成作答，才展示完整的VRIN/TRIN分数。
+  function rinComplete(scale, limit) {
+    return scale[1].every(function (pair) {
+      return pair[0] <= limit && pair[2] <= limit &&
+        (ans[pair[0]] === 'T' || ans[pair[0]] === 'F') &&
+        (ans[pair[2]] === 'T' || ans[pair[2]] === 'F');
+    });
+  }
+
   
   /* meowmeow 20230307 */
   // var ans_debug = ["FTTTTFFFFFTTFTTTTTFFFFTFTTFTTFTTTTTTFFFTTTTFTFFFTFFTTFTTTFTTTTFTTTTFFFFFFFTTTFFFFFFTFFTTTFTFFTTFFFTTTFFFFFTFFTFFFTTTFFFFFFTFTFFTFFTFFTTTFTTFFTFTTFTFFFFTTTFFTTFFFFTFTTTFTTTFTTFFTTTTFFTFFFTFTTTFTFTTTTFFFFFFTTFFTTFTFFFTTFTTFFTFTTTFTTFFFTFTFTTFTFTFTTFFFFFFTFFTTFTTFTFFTTFFFTFTFFTFTFTTTTTTFTFFTFTFFTFFFFFFFTFFFFFFFTTTFTFFFFFTFTFTTTTFFFFTTTTTFFTFFFTTTFFTTTFTFFTFFTTFFTFFFTTTTFTFTTTFTFFTFFTFTFFTTTFTFTFTTTFFTTTFTFFFTTTFTFTFTFTTFTTFFTTTFFTFTFFTTTTTFTTFFFTTFFFTFFTTFTFTFTTTFFTTTFTTFTFFFTTFTFTTFTTFTTFFTTFTFFFTTTFTFTFFTFTFTTTFFFFFTTFFTTTFTTTFTFFTTFFFTFTTFTTTFFFFFFTTFFFFTFFFTTF"]
@@ -70,6 +93,9 @@ function append_text(txt) {
 
   // Score the test
   function score() {
+    resetResults();
+    if (!longform) ans = ans.slice(0, short_form_question_count() + 1);
+    var answerLimit = longform ? questions.length - 1 : short_form_question_count();
     // Change mouse pointer to wait indicator
     // This does not seem to work because JavaScript blocks the UI message pump :(
     document.body.style.cursor = "wait";
@@ -79,9 +105,13 @@ function append_text(txt) {
     let k, rawscore, kscore, tscore, percent;
     let t_cnt, f_cnt, cs_cnt, pe;
   
+    // Keep the detailed tables together until the basic result has been rendered.
+    let technicalTables = document.createElement('section');
+    technicalTableTarget = technicalTables;
     // Make the scale and critical item tables
-    let scale_table = make_table("Scale", "Scale Description", "Raw Score", "K Score", "T Score", "% Answered");
+    let scale_table = make_table("Scale", "Scale Description", "Raw Score", "K Score", "T Score (美国常模)", "% Answered");
     let ci_table = make_table("Scale", "Scale Description", "Question", "Answer", "Question Text");
+    technicalTableTarget = null;
 
     let tscoreArray = [];
   
@@ -127,7 +157,10 @@ function append_text(txt) {
       // Append results to scale table
       // append_tr(scale_table, rin[i][0][0], rin[i][0][1], rawscore, " ", rin[i][2 + gender][rawscore], " ");
       // 20240823 同样的，值为undefined的时候，显示别的东西。注意TRIN与VRIN与其他的表项是分开处理的。话说这两项是什么意思来着？
-      append_tr(scale_table, rin[i][0][0], rin[i][0][1], rawscore, " ", rin[i][2 + gender][rawscore] === undefined ? "过高或过低" : rin[i][2 + gender][rawscore], " ");
+      var complete = rinComplete(rin[i], answerLimit);
+      append_tr(scale_table, rin[i][0][0], rin[i][0][1],
+        complete ? rawscore : '未完整作答', " ",
+        complete ? (rin[i][2 + gender][rawscore] === undefined ? "过高或过低" : rin[i][2 + gender][rawscore]) : '不可计算', " ");
     }
   
     // Score the scales and critical items
@@ -139,6 +172,18 @@ function append_text(txt) {
       rawscore = 0;
       // Get the T score table, critcal items will not have this (undefined)
       tscale = scales[i][3 + gender];
+      // 短卷不能给依赖后197题的量表产生部分原始分/T分。
+      if (!longform && scales[i][1].concat(scales[i][2]).some(function (item) { return item > 370; })) {
+        tscoreArray[i] = undefined;
+        if (tscale !== undefined && tscale.length)
+          append_tr(scale_table, scales[i][0][1], scales[i][0][2], '短卷不适用', ' ', '不可计算', ' ');
+        continue;
+      }
+      // Mf的另一性别条目没有T表，不能误报成受测者分数过高/过低。
+      if (tscale !== undefined && !tscale.length) {
+        tscoreArray[i] = undefined;
+        continue;
+      }
       // Iterate the True question list
       for (j = 0; j < scales[i][1].length; ++j) {
         // Get the question number
@@ -202,7 +247,7 @@ function append_text(txt) {
         percent = n * 100 / (scales[i][1].length + j);
         // Append results to score table
 
-        tscoreArray.push(tscore);
+        tscoreArray[i] = tscore;
 
         // append_tr(scale_table, scales[i][0][1], scales[i][0][2], rawscore, kscore === undefined ? " " : kscore, tscore, percent.toPrecision(3));
         // 20240823 尝试在tscore为undefined时，显示别的东西？
@@ -317,7 +362,7 @@ function append_text(txt) {
     // start_to_print_result(tscoreArray);
 
     // Debug...
-    start_to_print_result(resultArray, tscoreArray);
+    start_to_print_result(resultArray, tscoreArray, technicalTables);
   }
   
   // Read status of radio button group and return value of selected button
@@ -378,17 +423,17 @@ function append_text(txt) {
     span2.style.fontFamily = 'KaiTi'; // 设置字体为楷体
    
     // 插入三个空白行
-    document.body.appendChild(document.createElement('br'));
-    document.body.appendChild(document.createElement('br'));
-    document.body.appendChild(document.createElement('br'));
+    resultTarget().appendChild(document.createElement('br'));
+    resultTarget().appendChild(document.createElement('br'));
+    resultTarget().appendChild(document.createElement('br'));
 
     // 将图片元素添加到文档中
-    document.body.appendChild(img);
+    resultTarget().appendChild(img);
 
-    document.body.appendChild(document.createElement('br'));
-    document.body.appendChild(document.createElement('br'));
-    document.body.appendChild(span);
-    document.body.appendChild(span2);
+    resultTarget().appendChild(document.createElement('br'));
+    resultTarget().appendChild(document.createElement('br'));
+    resultTarget().appendChild(span);
+    resultTarget().appendChild(span2);
   }
   
   // 20240823 尝试在“界面”中把结果字符串打出来给用户看，并且附到邮件中发给我
@@ -686,21 +731,27 @@ function append_text(txt) {
   }
 
 function start_to_creat_profile(tscoreArray){
+  // 只换算图上的点；完整计分表继续显示美国查表 T 分。
+  let cnTscoreArray = [];
+  Object.keys(MMPI_CN.SCALE_INDEX).forEach(function (key) {
+    const index = MMPI_CN.scaleIndex(key, gender);
+    cnTscoreArray[index] = MMPI_CN.correctT(key, gender, tscoreArray[index]);
+  });
   if(gender === 0){
-    creat_trait_profile_1_male(tscoreArray);
+    creat_trait_profile_1_male(cnTscoreArray);
   }
   else{
-    creat_trait_profile_1_female(tscoreArray);
+    creat_trait_profile_1_female(cnTscoreArray);
   }
   // 2026-09 修复：内容量表全部依赖 371 题以后的项目，短卷下无效，不予呈现
   if (longform) {
-    creat_trait_profile_2(tscoreArray);
+    creat_trait_profile_2(cnTscoreArray);
   } else {
     let _w = document.createElement("p");
     _w.style.color = "#FFD700";
     _w.style.textAlign = "center";
     _w.textContent = "您选择了短卷（前 370 题）。内容量表依赖第 371 题以后的项目，因此未予呈现。如需内容量表，请选择长卷重新作答。";
-    document.getElementsByTagName("body")[0].appendChild(_w);
+    resultTarget().appendChild(_w);
   }
   // creat_trait_profile_3();
 }
@@ -713,7 +764,7 @@ function creat_trait_profile_1_female(tscoreArray){
     labels: [scales[3][0][1], scales[0][0][1], scales[4][0][1], scales[6][0][1], scales[7][0][1], scales[8][0][1], scales[9][0][1], scales[11][0][1], scales[12][0][1], scales[13][0][1], scales[14][0][1], scales[15][0][1], scales[16][0][1]],
     datasets: [
       {
-        label: "K分校正的一致性T分",
+        label: "中国常模近似 T 分",
         fill: false,
         lineTension: 0.025,
         borderRadius: 0,
@@ -744,23 +795,9 @@ function creat_trait_profile_1_female(tscoreArray){
     responsive: true,
     title: {
       display: true,
-      text: "效度量表与临床量表",
+      text: "效度量表与临床量表（中国常模近似 T 分）",
       fontSize: 20,
       fontColor: "white"
-    },
-    annotation: {
-      annotations: [{
-        type: 'line',
-        mode: 'horizontal',
-        scaleID: 'y-axis-0',
-        value: 35,
-        borderColor: '#FFFFFF',
-        borderWidth: 2,
-        label: {
-          enabled: true,
-          content: 'Max Value'
-        }
-      }]
     },
     scales: {
       // yAxes: [
@@ -777,7 +814,7 @@ function creat_trait_profile_1_female(tscoreArray){
           lineWidth: 1
         },
         ticks: {
-          beginAtZero: true,
+          min: 30,
           fontSize: 14,
           fontColor: "white"
         },
@@ -803,6 +840,7 @@ function creat_trait_profile_1_female(tscoreArray){
     // backgroundColor: "#FFFFFF",
     options: options,
   });
+  profileCharts.push(myChart1);
 }
 
 
@@ -813,7 +851,7 @@ function creat_trait_profile_1_male(tscoreArray){
     labels: [scales[3][0][1], scales[0][0][1], scales[4][0][1], scales[6][0][1], scales[7][0][1], scales[8][0][1], scales[9][0][1], scales[10][0][1], scales[12][0][1], scales[13][0][1], scales[14][0][1], scales[15][0][1], scales[16][0][1]],
     datasets: [
       {
-        label: "K分校正的一致性T分",
+        label: "中国常模近似 T 分",
         fill: false,
         lineTension: 0.025,
         borderRadius: 0,
@@ -844,23 +882,9 @@ function creat_trait_profile_1_male(tscoreArray){
     responsive: true,
     title: {
       display: true,
-      text: "效度量表与临床量表",
+      text: "效度量表与临床量表（中国常模近似 T 分）",
       fontSize: 20,
       fontColor: "white"
-    },
-    annotation: {
-      annotations: [{
-        type: 'line',
-        mode: 'horizontal',
-        scaleID: 'y-axis-0',
-        value: 35,
-        borderColor: '#FFFFFF',
-        borderWidth: 2,
-        label: {
-          enabled: true,
-          content: 'Max Value'
-        }
-      }]
     },
     scales: {
       // yAxes: [
@@ -877,7 +901,7 @@ function creat_trait_profile_1_male(tscoreArray){
           lineWidth: 1
         },
         ticks: {
-          beginAtZero: true,
+          min: 30,
           fontSize: 14,
           fontColor: "white"
         },
@@ -903,6 +927,7 @@ function creat_trait_profile_1_male(tscoreArray){
     // backgroundColor: "#FFFFFF",
     options: options,
   });
+  profileCharts.push(myChart1);
 }
 
 
@@ -915,7 +940,7 @@ function creat_trait_profile_2(tscoreArray){
     labels: [scales[48][0][1], scales[49][0][1], scales[50][0][1], scales[51][0][1], scales[52][0][1], scales[53][0][1], scales[54][0][1], scales[55][0][1], scales[56][0][1], scales[57][0][1], scales[58][0][1], scales[59][0][1], scales[60][0][1], scales[61][0][1], scales[62][0][1]],
     datasets: [
       {
-        label: "K分校正的一致性T分",
+        label: "中国常模近似 T 分",
         fill: false,
         lineTension: 0.025,
         borderRadius: 0,
@@ -945,23 +970,9 @@ function creat_trait_profile_2(tscoreArray){
     responsive: true,
     title: {
       display: true,
-      text: "内容量表",
+      text: "内容量表（中国常模近似 T 分）",
       fontSize: 20,
       fontColor: "white"
-    },
-    annotation: {
-      annotations: [{
-        type: 'line',
-        mode: 'horizontal',
-        scaleID: 'y-axis-0',
-        value: 35,
-        borderColor: '#FFFFFF',
-        borderWidth: 2,
-        label: {
-          enabled: true,
-          content: 'Max Value'
-        }
-      }]
     },
     scales: {
       // yAxes: [
@@ -978,7 +989,7 @@ function creat_trait_profile_2(tscoreArray){
           lineWidth: 1
         },
         ticks: {
-          beginAtZero: true,
+          min: 30,
           fontSize: 14,
           fontColor: "white"
         },
@@ -1004,6 +1015,7 @@ function creat_trait_profile_2(tscoreArray){
     // backgroundColor: "#FFFFFF",
     options: options,
   });
+  profileCharts.push(myChart2);
 }
 
 // Debug...
@@ -1069,82 +1081,16 @@ var damn = damn_for_gender(0);
 // damn 的顺序对应的量表代号，供中国常模换算查表用（见 origin_js/mmpi_cn_norms.js）
 var CN_KEYS = ["L", "F", "K", "Hs", "D", "Hy", "Pd", "Mf", "Pa", "Pt", "Sc", "Ma", "Si"];
 
-
 // 打表
 // function start_to_print_result(tscoreArray){
-function start_to_print_result(resultArray, tscoreArray){
+function start_to_print_result(resultArray, tscoreArray, technicalTables){
   damn = damn_for_gender(gender);   // 2026-09 修复：按受测者性别取正确的 Mf 下标
 
-  // 打未修正的表
-  let table = document.createElement("table");
-  table.style.borderCollapse = "collapse";
-  table.style.width = "80%";
-  table.setAttribute("border", "3");
-  table.style.margin = "auto";
-  table.setAttribute("bgcolor", "#B0C4DE");
-
-  // 创建表头行
-  let headerRow = document.createElement("tr");
-  headerRow.style.borderBottom = "2px solid black";
-  table.appendChild(headerRow);
-
-  // 创建表头单元格
-  let header1 = document.createElement("th");
-  header1.textContent = "各量表的一致性T分";
-  header1.style.padding = "8px";
-  header1.style.borderRight = "1px solid black";
-  headerRow.appendChild(header1);
-
-  let header2 = document.createElement("th");
-  header2.textContent = "最基本的部分解释";
-  header2.style.padding = "8px";
-  // 20240823尝试引入对“修正分”的描述 
-  // header2.style.color = "red"
-  headerRow.appendChild(header2);
-
-  // 创建数据行和单元格
-  // for (let i = 0; i < resultArray.length; i++) {
-    // 14 === 3 + 9 + 2(Mf)
-  for (let i = 0; i < 13; i++) {
-    // if(i === 12 || i === 7){
-    if(i === 7){
-      // 懒得打Mf的表了...
-      continue;
-    }
-
-    let row = document.createElement("tr");
-    table.appendChild(row);
-
-    let cell1 = document.createElement("td");
-    cell1.textContent = resultArray[i][0] + " : " + tscoreArray[damn[i]];
-    cell1.style.padding = "8px";
-    cell1.style.borderRight = "1px solid black";
-    row.appendChild(cell1);
-
-    let cell2 = document.createElement("td");
-
-    if(tscoreArray[damn[i]] >= resultArray[i][1]){
-      cell2.textContent = resultArray[i][3];
-    }
-    else if(tscoreArray[damn[i]] >= resultArray[i][2]){
-      cell2.textContent = resultArray[i][4];
-    }
-    else if(tscoreArray[damn[i]] < resultArray[i][2]){
-      cell2.textContent = resultArray[i][5];
-    }
-    else{
-      cell2.textContent = "您的分数超出了量表范围。详情请见 github issue   （https://github.com/MMPI-CHN/MMPI-CHN.github.io/issues/3）"
-    }
-
-    // cell2.textContent = resultArray[i][1];
-    cell2.style.padding = "8px";
-    row.appendChild(cell2);
-  }
-
-  // 20240823 再加打一张进行了-8修正的表
+  // 主结果只展示按中国样本统计量换算的近似 T 分；美国 T 分保留用于内部换算。
   let table2 = document.createElement("table");
   table2.style.borderCollapse = "collapse";
   table2.style.width = "80%";
+  table2.style.tableLayout = "fixed";
   table2.setAttribute("border", "3");
   table2.style.margin = "auto";
   table2.setAttribute("bgcolor", "#B0C4DE");
@@ -1156,17 +1102,18 @@ function start_to_print_result(resultArray, tscoreArray){
 
   // 创建表头单元格
   let header3 = document.createElement("th");
-  header3.textContent = "各量表的中国常模 T 分（原为 -8 修正）";
+  header3.textContent = "中国常模近似 T 分";
   header3.style.padding = "8px";
+  header3.style.width = "24%";
   header3.style.borderRight = "1px solid black";
-  header3.style.color = "red"
+  header3.style.color = "black";
   headerRow2.appendChild(header3);
 
   let header4 = document.createElement("th");
-  header4.textContent = "最基本的部分解释（文字仍源自美国常模解释体系）";
+  header4.textContent = "基础解释";
   header4.style.padding = "8px";
   // 20240823尝试引入对“修正分”的描述 
-  header4.style.color = "red"
+  header4.style.color = "black";
   headerRow2.appendChild(header4);
 
   // 创建数据行和单元格
@@ -1200,7 +1147,7 @@ function start_to_print_result(resultArray, tscoreArray){
       //   (b) 该量表确实没有已出版的中国常模统计量（约 110 个量表属于此类）。
       const __noUS = (__tUS === undefined || __tUS === null || __tUS === "" || isNaN(Number(__tUS)));
       const __hasCNNorm = (typeof MMPI_CN !== "undefined") && MMPI_CN.hasNorm(__key);
-      cell1.textContent = resultArray[i][0] + " : "
+      cell1.textContent = (i === 7 ? 'Mf（按' + (gender ? '女性' : '男性') + '计分）' : resultArray[i][0]) + " : "
         + (__noUS ? "超出量表范围" : "无中国常模数据");
       cell1.style.color = "#888888";
       row.appendChild(cell1);
@@ -1213,35 +1160,35 @@ function start_to_print_result(resultArray, tscoreArray){
           + (__hasCNNorm ? "（本量表本身是有中国常模数据的。）" : "")
           + " 若您漏答较多，建议补全后重测。";
       } else {
-        c2.textContent = "本量表尚无已出版的中国常模统计量，故不做换算。可参考左侧美国常模表，"
-          + "但请注意美国常模会系统性高估中国受测者的分数。";
+        c2.textContent = "本量表尚无已出版的中国常模统计量，故不做换算。";
       }
       row.appendChild(c2);
       continue;
     }
 
-    const __elevated = __tCN >= __cut;
-    cell1.textContent = resultArray[i][0] + " : " + __tCN
-                      + "（美国常模 " + __tUS + "）";
+    // 60仅作八个主要临床量表的换算参考线，不泛用于L/F/K、Mf或Si。
+    const __elevated = ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma'].indexOf(__key) >= 0
+      && MMPI_CN.correctT(__key, gender, __tUS, { round: false }) >= __cut;
+    cell1.textContent = (i === 7 ? 'Mf（按' + (gender ? '女性' : '男性') + '计分）' : resultArray[i][0]) + " : " + __tCN;
     if (__elevated) { cell1.style.color = "red"; }
     row.appendChild(cell1);
 
     let cell2 = document.createElement("td");
     cell2.style.padding = "8px";
     cell2.style.verticalAlign = "top";
-    // 解释文本由【美国】T 分驱动，而不是中国 T 分 —— 这是刻意的。
-    // 这些文本的措辞里直接写着"T分高于65""若65<=T<=79"等等，档位是按美国常模写的。
-    // 若改用中国 T 分驱动，就会出现"中国T=59"配上"低于平均值"这类自相矛盾的句子。
-    // 因此：数值用中国常模（判断是否达到 60 分界点），描述性文字沿用美国常模的解释体系，
-    // 并在表下明确标注其来源。补齐这一层需要《MMPI-2中文简体字版使用手册》第七章的
-    // 中文编码型解析，已列入待办，见 docs/探索纪要.md。
-    let __txt;
-    if (__tUS >= resultArray[i][1])      { __txt = resultArray[i][3]; }
-    else if (__tUS >= resultArray[i][2]) { __txt = resultArray[i][4]; }
-    else                                 { __txt = resultArray[i][5]; }
-    cell2.textContent = (__txt === undefined || __txt === "") ? "" : __txt;
+    // 保留作者原有的三档阈值和解释文字，仅把旧版有条件减8得到的分数
+    // 换成当前计算出的近似中国 T 分，再按同一规则选档。
+    if (i === 7) {
+      cell2.textContent = 'Mf 量表使用与所选性别对应的计分表；本项目暂无此量表的单项解释文字。';
+    } else if (__tCN >= resultArray[i][1]) {
+      cell2.textContent = resultArray[i][3];
+    } else if (__tCN >= resultArray[i][2]) {
+      cell2.textContent = resultArray[i][4];
+    } else {
+      cell2.textContent = resultArray[i][5];
+    }
     if (__elevated) {
-      cell2.textContent = "【已达到中国常模 " + __cut + " 分界点】" + cell2.textContent;
+      cell2.textContent = "【近似换算值达到 " + __cut + " 分参考线，不等于诊断】" + cell2.textContent;
     }
     row.appendChild(cell2);
   }
@@ -1250,44 +1197,16 @@ function start_to_print_result(resultArray, tscoreArray){
   // 创建注释性文字元素
   var span = document.createElement('span');
   var span2 = document.createElement('span2');
-  var span3 = document.createElement('span3')
-  var text = document.createTextNode('第二张表的 T 分已按中国常模换算。依据是 Cheung, Song & Zhang (1996) 表6-3 公布的中国全国常模样本（男1106/女1108，覆盖七大行政区，对标全国人口统计）在美国常模尺度上的均值与标准差，做位置与离散度两参数校正。中国 MMPI-2 的区分点是 60 T 分（美国为 65），见《MMPI-2中文简体字版使用手册》第二章第七节。');
+  var span3 = document.createElement('a');
+  var text = document.createTextNode('中国常模近似T分表按 Cheung, Song & Zhang (1996) 表6-3的中国样本统计量换算，并非官方中国常模查表结果。该表给出男1106人、女1108人在美国常模尺度上的均值与标准差。两参数换算不能验证个人分数或临床分界点的准确性，也不能弥补本项目译文与正版译文不同的影响。');
   var text2 = document.createTextNode('注意！结果仅供参考！');
-  var text3 = document.createTextNode('常模换算的依据、验证过程与已知局限：https://github.com/MMPI-CHN/MMPI-CHN.github.io/blob/main/docs/%E6%8E%A2%E7%B4%A2%E7%BA%AA%E8%A6%81-TLDR.md');
+  span3.textContent = '查看常模换算的依据、验证过程与已知局限';
+  span3.href = 'https://github.com/MMPI-CHN/MMPI-CHN.github.io/blob/main/docs/%E6%8E%A2%E7%B4%A2%E7%BA%AA%E8%A6%81-TLDR.md';
+  span3.target = '_blank';
+  span3.rel = 'noopener noreferrer';
   span.appendChild(text);
 
-  // 2026-09 新增：给出每个量表"美国 T 分需达到多少，才相当于中国 60 分界点"。
-  // 这个对照表比任何文字解释都直观地说明了两套常模的差距。
-  if (typeof MMPI_CN !== "undefined") {
-    var cutTbl = document.createElement("table");
-    cutTbl.style.borderCollapse = "collapse";
-    cutTbl.style.margin = "16px auto";
-    cutTbl.setAttribute("border", "1");
-    cutTbl.setAttribute("bgcolor", "#B0C4DE");
-    var cutCap = document.createElement("caption");
-    cutCap.textContent = "美国常模 T 分需达到下列数值，才相当于中国常模的 60 分界点";
-    cutCap.style.padding = "6px";
-    cutTbl.appendChild(cutCap);
-    var hr = document.createElement("tr");
-    ["量表", "美国T分"].forEach(function (h) {
-      var th = document.createElement("th"); th.textContent = h;
-      th.style.padding = "4px 12px"; hr.appendChild(th);
-    });
-    cutTbl.appendChild(hr);
-    CN_KEYS.forEach(function (k) {
-      var v = MMPI_CN.usTForCN(k, gender);
-      if (v === null) { return; }
-      var tr = document.createElement("tr");
-      [k, v.toFixed(1)].forEach(function (c) {
-        var td = document.createElement("td"); td.textContent = c;
-        td.style.padding = "3px 12px"; tr.appendChild(td);
-      });
-      cutTbl.appendChild(tr);
-    });
-    window.__cn_cutoff_table = cutTbl;   // 延后插入，见下方 table2 之后
-  }
   span2.appendChild(text2);
-  span3.appendChild(text3);
   
   var span4 = document.createElement('span4');
   var text4 = document.createTextNode('如果有需要，可以保留您的原始选项。您做出的选择是（0代表male 1代表female）：' + gender.toString() + ans);
@@ -1296,9 +1215,13 @@ function start_to_print_result(resultArray, tscoreArray){
   // 设置文字样式
   span.style.display = 'block'
   span.style.textAlign= 'center'; // 设置居中对齐
-  span.style.color = "red"; // 设置文字颜色
+  span.style.color = "#87CEEB";
   span.style.fontFamily = 'KaiTi'; // 设置字体为楷体
   span.style.fontSize = '16px';
+  span.style.maxWidth = '1100px';
+  span.style.margin = '0 auto';
+  span.style.padding = '0 16px';
+  span.style.lineHeight = '1.65';
   span2.style.display = 'block'
   span2.style.textAlign= 'center'; // 设置居中对齐
   span2.style.color = "red"; // 设置文字颜色
@@ -1307,53 +1230,55 @@ function start_to_print_result(resultArray, tscoreArray){
 
   span3.style.display = 'block'
   span3.style.textAlign= 'center'; // 设置居中对齐
-  span3.style.color = "red"; // 设置文字颜色
+  span3.style.color = "#87CEEB";
   span3.style.fontFamily = 'KaiTi'; // 设置字体为楷体
+  span3.style.maxWidth = '1100px';
+  span3.style.margin = '0 auto';
+  span3.style.padding = '0 16px';
+  span3.style.lineHeight = '1.65';
+  span3.style.textDecoration = 'underline';
 
   span4.style.display = 'block'
   span4.style.textAlign= 'center'; // 设置居中对齐
   span4.style.color = "#B0C4DE"; // 设置文字颜色
   span4.style.fontFamily = 'KaiTi'; // 设置字体为楷体
   span4.style.wordWrap = 'break-word'; // 允许在单词内换行
+  span4.style.overflowWrap = 'anywhere';
+  span4.style.maxWidth = '1100px';
+  span4.style.boxSizing = 'border-box';
+  span4.style.margin = '0 auto';
+  span4.style.padding = '0 16px';
+  span4.style.lineHeight = '1.65';
   
   // 将表格添加到页面中
   // 插入三个空白行
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
 
-  document.body.appendChild(table);
-
-  // 插入三个空白行
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
-
-  document.body.appendChild(span);
-  document.body.appendChild(span2);
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(span3);
+  resultTarget().appendChild(span);
+  resultTarget().appendChild(span2);
+  resultTarget().appendChild(document.createElement('br'));
+  resultTarget().appendChild(span3);
 
   // 插入三个空白行
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
 
-  document.body.appendChild(table2);
+  resultTarget().appendChild(table2);
 
-  // 2026-09：分界点对照表紧随中国常模表之后
-  if (typeof window !== "undefined" && window.__cn_cutoff_table) {
-    document.body.appendChild(document.createElement('br'));
-    document.body.appendChild(window.__cn_cutoff_table);
-    window.__cn_cutoff_table = null;
+  // 插入三个空白行
+  resultTarget().appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
+  resultTarget().appendChild(document.createElement('br'));
+
+  if (technicalTables) {
+    resultTarget().appendChild(technicalTables);
+    resultTarget().appendChild(document.createElement('br'));
+    resultTarget().appendChild(document.createElement('br'));
   }
-
-  // 插入三个空白行
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
-  document.body.appendChild(document.createElement('br'));
-
-  document.body.appendChild(span4);
+  resultTarget().appendChild(span4);
 
 }
 
@@ -1580,17 +1505,18 @@ function clickRandomToTOrF(formId) {
   // 使用提供的formId获取表单
   var form = document.getElementById(formId);
   if (form) {
-      // 遍历表单中的所有元素
+      // 每道题只抽样一次；逐个radio抽样会偏向后面的F，且可能漏答。
+      var choices = {};
       for (var i = 0; i < form.elements.length; i++) {
           var element = form.elements[i];
           // 检查元素是否为单选按钮
-          if (element.type === 'radio') {
+          if (element.type === 'radio' && /^Q\d+$/.test(element.name)) {
               // 生成一个随机数，随机选择T或F
-              var randomValue = Math.random() > 0.5 ? 'T' : 'F';
+              if (!Object.prototype.hasOwnProperty.call(choices, element.name))
+                  choices[element.name] = Math.random() > 0.5 ? 'T' : 'F';
+              var randomValue = choices[element.name];
               // var randomValue = (i % 2 === 0) ? 'T' : 'F';
-              if (element.value === randomValue) {
-                  element.checked = true;
-              }
+              element.checked = element.value === randomValue;
           }
       }
   } else {
