@@ -520,29 +520,38 @@ function append_text(txt) {
   // 内容量表与 Fb 依赖 371 题以后的项目，短卷下无效，必须不予呈现。
   function short_form_question_count() { return 370; }
   
-  
-  
+  // Change question display only; keep answer controls, scoring and reports intact.
+  function set_question_language(mode) {
+    if (mode !== "both" && mode !== "en" && mode !== "zh") return false;
+    document.body.setAttribute("data-question-language", mode);
+    var selector = document.getElementById("question-language");
+    if (selector) selector.value = mode;
+    return true;
+  }
+
   function my_doc_write_all_questions() {
     for (var i = 1; i < questions.length; ++i) {
-      my_doc_write_question("Q" + i, i + ". " + questions[i], questions_zh[i]);
+      my_doc_write_question("Q" + i, i, questions[i], questions_zh[i]);
       if (i === 370) { document.write("<div id=\"longformdiv\">"); }
     }
     if (i > 370) { document.write("<\/div>"); }
   }
   
-  function my_doc_write_question(name, text, text_zh) {
-    document.write(text + "<br>", text_zh + "<br>");
+  function my_doc_write_question(name, number, text, text_zh) {
+    document.write('<span class="question-number">' + number + '. </span>');
+    document.write('<span class="question-text--en" lang="en">' + text + '<br></span>');
+    document.write('<span class="question-text--zh" lang="zh-CN">' + text_zh + '<br></span>');
 
     /* 下面这行是原版。现在为了debug，加一个checked标签使该选项默认选中 */ 
     document.write("<span class=\"answer-options\">");
-    document.write("<label class=\"answer-option\"><input type=\"radio\" id=\"" + name + "\" name=\"" + name + "\" value=\"T\" required=\"required\"><span class=\"answer-option__surface\">符合</span></label>");
+    document.write("<label class=\"answer-option\"><input type=\"radio\" id=\"" + name + "\" name=\"" + name + "\" value=\"T\" required=\"required\"><span class=\"answer-option__surface\"><span class=\"question-ui--zh\" lang=\"zh-CN\">符合</span><span class=\"question-ui--en\" lang=\"en\">True</span></span></label>");
 
     /* For debugging... */
     // document.write("<input type=\"radio\" id=" + name + " name=\"" + name + "\" value=\"T\" required=\"required\" checked=\"checked\"><label for=" + name + ">是</label>");
 
     // document.write("<input type=\"radio\" name=" + name + " value=\"T\" >是");
     // document.write("<input type=\"radio\" name=" + name + " value=\"F\">否");
-    document.write("<label class=\"answer-option\"><input type=\"radio\" id=\"Not_" + name + "\" name=\"" + name + "\" value=\"F\" required=\"required\"><span class=\"answer-option__surface\">不符合</span></label>");
+    document.write("<label class=\"answer-option\"><input type=\"radio\" id=\"Not_" + name + "\" name=\"" + name + "\" value=\"F\" required=\"required\"><span class=\"answer-option__surface\"><span class=\"question-ui--zh\" lang=\"zh-CN\">不符合</span><span class=\"question-ui--en\" lang=\"en\">False</span></span></label>");
     document.write("</span><br><br>");
   }
 

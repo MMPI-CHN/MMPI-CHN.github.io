@@ -26,7 +26,7 @@ frame.onload = function () {
     check(instruction && instruction.textContent.includes('按整句话判断'), '作答说明明确否定句也按整句判断');
     const firstOptions = [...d.querySelectorAll('.answer-option')].slice(0, 2);
     const submitButton = d.querySelector('input.my_button[value="提交测试"]');
-    check(firstOptions.length === 2 && firstOptions.map(el => el.textContent.trim()).join('/') === '符合/不符合' &&
+    check(firstOptions.length === 2 && firstOptions.map(el => el.innerText.trim()).join('/') === '符合/不符合' &&
       firstOptions.every(el => el.getBoundingClientRect().height >= 35 && el.getBoundingClientRect().width >= 58 &&
         getComputedStyle(el.querySelector('.answer-option__surface')).fontSize === getComputedStyle(submitButton).fontSize), '题目选项约58×35且字号与提交测试一致');
     const firstSurface = firstOptions[0].querySelector('.answer-option__surface');

@@ -117,6 +117,46 @@
         text-align: left;
       }
 
+      .question-language-control {
+        font-size: 1.2rem;
+      }
+
+      #question-language {
+        max-width: 100%;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid #708090;
+        border-radius: 4px;
+        background: #1b1f22;
+        color: #F0F8FF;
+        font: inherit;
+      }
+
+      #question-language:focus-visible {
+        outline: 2px solid #87CEEB;
+        outline-offset: 3px;
+      }
+
+      .question-language-note {
+        box-sizing: border-box;
+        max-width: 820px;
+        margin: 0.5rem auto 1.5rem;
+        padding: 0 1rem;
+        color: #B0C4DE;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .question-ui--en,
+      body[data-question-language="en"] .question-text--zh,
+      body[data-question-language="en"] .question-ui--zh,
+      body[data-question-language="zh"] .question-text--en {
+        display: none;
+      }
+
+      body[data-question-language="en"] .question-ui--en {
+        display: inline;
+      }
+
       .answer-options {
         display: inline-flex;
         gap: 8px;
@@ -203,7 +243,7 @@
     }
   </style>
 </head>
-<body><div>
+<body data-question-language="both"><div>
 
   <!-- 尝试弹出提升框 -->
   <script>
@@ -237,7 +277,26 @@
       <input type="radio" name="testform" value="L" onclick="use_long_form(true);" checked="">Long
       <input type="radio" name="testform" value="S" onclick="use_long_form(false);">Short
     </p>
+    <p class="question-language-control">
+      <label for="question-language">题目显示 / Question text</label>
+      <select id="question-language" aria-describedby="question-language-note" onchange="set_question_language(this.value);">
+        <option value="both" selected>中英对照 / Bilingual</option>
+        <option value="en">English only</option>
+        <option value="zh">仅中文</option>
+      </select>
+    </p>
+    <p id="question-language-note" class="question-language-note">
+      仅切换题目显示；结果解释仍为中文，沿用现有近似中国常模。<br>
+      Question display only. Scoring still uses the site's approximate Chinese norms; result explanations remain in Chinese.
+    </p>
   </form>
+
+  <script>
+    // Keep the display in sync if the browser restores the selector on back/reload.
+    window.addEventListener('pageshow', function () {
+      set_question_language(document.getElementById('question-language').value);
+    });
+  </script>
 
   <!-- 2023.11.15 尝试用trick来白嫖表单收集次数 -->
   <!-- 只是更改action的内容，康康会不会被出警 -->
@@ -247,9 +306,9 @@
   <!-- https://formspree.io/f/xoqgvzbr 对应的是Crime4 -->
   
   <!-- 20240514 尝试在POST的时候进行检查，以减少无用表项的收集。 -->
-  <!-- <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/mgebzeqq" method="POST"> -->
+  <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/mgebzeqq" method="POST">
   <!-- <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/myyqajok" method="POST"> -->
-  <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/xoqgvzbr" method="POST">
+  <!-- <form id="select_all" name="questions" onsubmit="return validateForm()" action="https://formspree.io/f/xoqgvzbr" method="POST"> -->
     <p>
 
       <!-- 2024.5.14 尝试加一个不可见的问题，并且通过性别那里的onclick在这里标注出来，从而可以传输性别。
@@ -258,7 +317,7 @@
       <input type="hidden" name="invisible_question" id="invisible_question" value="0">
       <!-- 。。。。。。。。。。。。。。。。。。。。。。。。。。。。 -->
 
-      <p class="answer-instruction">请判断每句话是否符合您的实际情况；句中含有“不、没有、从未”等否定词时，也请按整句话判断。</p>
+      <p class="answer-instruction"><span class="question-ui--zh" lang="zh-CN">请判断每句话是否符合您的实际情况；句中含有“不、没有、从未”等否定词时，也请按整句话判断。</span><span class="question-ui--en" lang="en">Decide whether each statement is true or false for you. Read the whole statement, including words such as “not” and “never”.</span></p>
 
       <script type="text/javascript">my_doc_write_all_questions();</script>
 
